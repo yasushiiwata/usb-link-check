@@ -301,6 +301,26 @@ def _from_string_descriptors(rec: dict[str, Any]) -> str | None:
     return product
 
 
+#: 名前の末尾から落とす汎用的な語（SPEC.md 4.2 補助）
+_GENERIC_SUFFIXES = (
+    "USB Device",
+    "USB デバイス",
+)
+
+
+def _strip_generic_suffix(name: str) -> str:
+    """末尾の汎用語を落とす（例: `Acer USB Flash Drive USB Device` → `Acer USB Flash Drive`）。
+
+    落とした結果が空になる場合や、名前そのものが汎用語だけの場合は落とさない。
+    """
+    for suffix in _GENERIC_SUFFIXES:
+        if len(name) > len(suffix) and name.lower().endswith(" " + suffix.lower()):
+            trimmed = name[: -(len(suffix) + 1)].strip()
+            if trimmed:
+                return trimmed
+    return name
+
+
 def device_name(rec: dict[str, Any]) -> str:
     """表示用のデバイス名（SPEC.md 4.2 補助の解決順）。取得できたものを順に採用する。"""
     child_names = rec.get("child_names") or []
@@ -318,7 +338,7 @@ def device_name(rec: dict[str, Any]) -> str:
     )
     for candidate in candidates:
         if candidate and candidate.strip():
-            return candidate.strip()
+            return _strip_generic_suffix(candidate.strip())
     return f"{rec.get('vid') or 0:04X}:{rec.get('pid') or 0:04X}"
 
 

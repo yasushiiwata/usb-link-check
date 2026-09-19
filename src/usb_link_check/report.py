@@ -223,8 +223,19 @@ def _short(cap: Capability) -> str:
     return f"{cap.speed.short}+" if cap.confidence is not Confidence.EXACT else cap.speed.short
 
 
+#: --list の 3 値の状態マーク（SPEC.md 6.1.1）
+_STATUS_MARKS = {"underperforming": "⚠", "undetermined": "?", "ok": ""}
+_STATUS_LEGEND = (
+    "⚠ = 能力より遅くリンクしていることが確定（L < min(P, D)）。"
+    "--device で詳細を確認してください。",
+    "? = 判別できません（P または D の上限が不明なため、落ちているのか天井なのか分かりません）。",
+    "無印 = 現構成で出せる最高速で動作していることが確定（L = min(P, D)）。"
+    "ポートを変えれば速くなる構成もこれに該当します（--device で確認してください）。",
+)
+
+
 def render_device_list(devices: list[DeviceSummary]) -> str:
-    """`--list` の出力（SPEC.md 6.1.1）。L < min(P, D) の行に警告マークを付ける。"""
+    """`--list` の出力（SPEC.md 6.1.1）。状態を ⚠ / ? / 無印 の 3 値で示す。"""
     if not devices:
         return "USB デバイスが見つかりませんでした。"
     widths = (2, 9, 10, 10, 10, 18)
@@ -233,7 +244,7 @@ def render_device_list(devices: list[DeviceSummary]) -> str:
     for d in devices:
         mark = "  [マスストレージ]" if d.is_mass_storage else ""
         cols = (
-            "⚠" if d.is_underperforming else "",
+            _STATUS_MARKS[d.status],
             d.vid_pid,
             d.link_speed.short if d.link_speed else "不明",
             _short(d.port_capability),
@@ -243,11 +254,8 @@ def render_device_list(devices: list[DeviceSummary]) -> str:
         lines.append(
             "  ".join(_pad(v, w) for v, w in zip(cols, widths, strict=True)) + f"  {d.name}{mark}"
         )
-    if any(d.is_underperforming for d in devices):
-        lines.append("")
-        lines.append(
-            "⚠ = 能力より遅くリンクしています（L < min(P, D)）。--device で詳細を確認してください。"
-        )
+    lines.append("")
+    lines.extend(_STATUS_LEGEND)
     return "\n".join(lines)
 
 

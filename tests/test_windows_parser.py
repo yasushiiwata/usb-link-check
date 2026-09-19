@@ -225,9 +225,21 @@ def test_port11_ss_fail_is_a1_with_port_wiring_hint() -> None:
 # ---------------------------------------------------------------- 表示用の値
 
 
-def test_device_name_falls_back_when_no_name_is_available() -> None:
-    """既存フィクスチャには文字列ディスクリプタ・子デバイスが無いので末尾まで下がる。"""
-    assert device_name(target_record("windows_fast")) == "USB Device"
+@pytest.mark.parametrize("fixture", ["windows_fast", "windows_usb2", "windows_port2"])
+def test_device_name_uses_the_child_product_name(fixture: str) -> None:
+    """マスストレージは子デバイス側の製品名を採用し、末尾の汎用語を落とす。"""
+    assert device_name(target_record(fixture)) == "Acer USB Flash Drive"
+
+
+def test_device_name_falls_back_on_the_old_dump_format() -> None:
+    """windows_port11_ss_fail は文字列ディスクリプタ・子デバイス名を持たない（SPEC.md 9.1）。
+
+    名前解決が末尾までフォールバックする経路を実データで検証する。
+    """
+    rec = target_record("windows_port11_ss_fail")
+    assert rec["child_names"] == []
+    assert rec["manufacturer"] is None
+    assert device_name(rec) == "USB Device"  # 汎用語だけの名前は落とさない
 
 
 @pytest.mark.parametrize(
@@ -243,7 +255,7 @@ def test_device_name_falls_back_when_no_name_is_available() -> None:
                 "manufacturer": "Acer",
                 "product": "USB Device",
             },
-            "Acer USB Flash Drive USB Device",
+            "Acer USB Flash Drive",  # 末尾の汎用語を落とす
         ),
         # 3. マスストレージ以外は文字列ディスクリプタを子より優先する
         (
@@ -326,7 +338,7 @@ def test_select_without_spec_picks_mass_storage_only() -> None:
     assert [(d.vid, d.pid) for d in platform.select(None)] == [TARGET]
 
 
-@pytest.mark.parametrize("spec", ["346d:5678", "346D:5678", "USB Device"])
+@pytest.mark.parametrize("spec", ["346d:5678", "346D:5678", "flash drive"])
 def test_select_by_vid_pid_or_name(spec: str) -> None:
     platform = WindowsPlatform(load("windows_fast"))
     assert [(d.vid, d.pid) for d in platform.select(spec)] == [TARGET]

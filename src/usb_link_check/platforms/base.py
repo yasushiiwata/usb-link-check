@@ -9,10 +9,10 @@ from __future__ import annotations
 import re
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
-from typing import Any
+from typing import Any, Literal
 
 from ..diagnosis import capability_min
-from ..models import Capability, ConnectorType, Diagnosis, LinkSpeed
+from ..models import Capability, Confidence, ConnectorType, Diagnosis, LinkSpeed
 
 _DEVICE_SPEC_RE = re.compile(r"^(?P<vid>[0-9A-Fa-f]{1,4}):(?P<pid>[0-9A-Fa-f]{1,4})$")
 
@@ -34,13 +34,27 @@ class DeviceSummary:
     raw: dict[str, Any] = field(default_factory=dict)
 
     @property
-    def is_underperforming(self) -> bool:
-        """L < min(P, D) か。`--list` の警告マークに使う（SPEC.md 6.1.1）。
+    def status(self) -> Literal["underperforming", "undetermined", "ok"]:
+        """`--list` の 3 値の状態（SPEC.md 6.1.1）。
 
-        min が UNKNOWN のときは判定できないので警告しない（推測で埋めない）。
+        - underperforming: `L < min(P, D)` が確定している
+        - undetermined: P または D の上限が不明で、落ちているのか天井なのか判別できない
+        - ok: P と D がともに EXACT で `L = min(P, D)`
         """
-        ceiling = capability_min(self.port_capability, self.device_capability).lower_bound
-        return ceiling is not None and self.link_speed is not None and self.link_speed < ceiling
+        ceiling = capability_min(self.port_capability, self.device_capability)
+        lower = ceiling.lower_bound
+        if lower is None or self.link_speed is None:
+            return "undetermined"
+        if self.link_speed < lower:
+            # 天井の下限値より遅い = 確実に落ちている
+            return "underperforming"
+        # L が天井の下限値と同じとき、天井が AT_LEAST なら本当の上限が分からない
+        return "ok" if ceiling.confidence is Confidence.EXACT else "undetermined"
+
+    @property
+    def is_underperforming(self) -> bool:
+        """L < min(P, D) が確定しているか。"""
+        return self.status == "underperforming"
 
     @property
     def vid_pid(self) -> str:
