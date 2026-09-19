@@ -1,0 +1,3442 @@
+{
+  "schema": "usb-link-check/windows-raw-dump",
+  "schema_version": 1,
+  "collector_version": "0.1.0",
+  "collected_at": "2026-09-20T06:51:48+09:00",
+  "platform": {
+    "system": "Windows",
+    "release": "11",
+    "version": "10.0.26200",
+    "machine": "AMD64",
+    "python": "3.12.10 (tags/v3.12.10:0cc8128, Apr  8 2025, 12:21:36) [MSC v.1943 64 bit (AMD64)]",
+    "windows_build": 26200,
+    "pointer_size": 8
+  },
+  "is_admin": false,
+  "host_controllers": [
+    {
+      "device_path": "\\\\?\\pci#ven_8086&dev_06ed&subsys_8719103c&rev_00#3&11583659&1&a0#{3abf6f2d-71c4-462a-8a92-1e6861e6af27}",
+      "instance_id": "PCI\\VEN_8086&DEV_06ED&SUBSYS_8719103C&REV_00\\3&11583659&1&A0",
+      "parent_instance_id": "ACPI\\PNP0A08\\0",
+      "description": "USB xHCI 対応ホスト コントローラー",
+      "friendly_name": "Intel(R) USB 3.1 eXtensible Host Controller - 1.10 (Microsoft)",
+      "bus_reported_description": "ユニバーサル シリアル バス (USB) コントローラー",
+      "driver_key": "{36fc9e60-c465-11cf-8056-444553540000}\\0000",
+      "service": "USBXHCI",
+      "location_information": "PCI バス 0, デバイス 20, 機能 0",
+      "location_paths": [
+        "PCIROOT(0)#PCI(1400)",
+        "ACPI(_SB_)#ACPI(PCI0)#ACPI(XHC_)"
+      ]
+    }
+  ],
+  "hubs": [
+    {
+      "device_path": "\\\\?\\usb#root_hub30#4&1feef4ee&0&0#{f18a0e88-c30c-11d0-8815-00a0c906bed8}",
+      "instance_id": "USB\\ROOT_HUB30\\4&1FEEF4EE&0&0",
+      "parent_instance_id": "PCI\\VEN_8086&DEV_06ED&SUBSYS_8719103C&REV_00\\3&11583659&1&A0",
+      "description": "USB ルート ハブ (USB 3.0)",
+      "friendly_name": null,
+      "bus_reported_description": null,
+      "driver_key": "{36fc9e60-c465-11cf-8056-444553540000}\\0001",
+      "service": "USBHUB3",
+      "location_information": null,
+      "location_paths": [
+        "PCIROOT(0)#PCI(1400)#USBROOT(0)",
+        "ACPI(_SB_)#ACPI(PCI0)#ACPI(XHC_)#ACPI(RHUB)"
+      ],
+      "index": 0,
+      "open_attempts": [
+        {
+          "access": "GENERIC_WRITE",
+          "ok": true
+        }
+      ],
+      "node_information": {
+        "ioctl": "IOCTL_USB_GET_NODE_INFORMATION",
+        "code": "0x00220408",
+        "ok": true,
+        "input_length": 76,
+        "input_hex_head": "00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00",
+        "output_buffer_size": 76,
+        "bytes_returned": 76,
+        "raw_hex": "00 00 00 00 09 29 1a 00 00 02 00 00 00 00 00 ff ff ff ff 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00",
+        "decoded": {
+          "NodeType": 0,
+          "NodeType_name": "UsbHub",
+          "HubDescriptor": {
+            "bDescriptorLength": 9,
+            "bDescriptorType": 41,
+            "bNumberOfPorts": 26,
+            "wHubCharacteristics": 0,
+            "bPowerOnToPowerGood": 2,
+            "bHubControlCurrent": 0
+          },
+          "HubIsBusPowered": false
+        }
+      },
+      "hub_information_ex": {
+        "ioctl": "IOCTL_USB_GET_HUB_INFORMATION_EX",
+        "code": "0x00220454",
+        "ok": true,
+        "input_length": 77,
+        "input_hex_head": "00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00",
+        "output_buffer_size": 77,
+        "bytes_returned": 77,
+        "raw_hex": "01 00 00 00 1a 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00",
+        "decoded": {
+          "HubType": 1,
+          "HubType_name": "UsbRootHub",
+          "HighestPortNumber": 26,
+          "UsbHubDescriptor": {
+            "bDescriptorLength": 0,
+            "bDescriptorType": 0,
+            "bNumberOfPorts": 0,
+            "wHubCharacteristics": 0,
+            "bPowerOnToPowerGood": 0,
+            "bHubControlCurrent": 0
+          }
+        }
+      },
+      "hub_capabilities_ex": {
+        "ioctl": "IOCTL_USB_GET_HUB_CAPABILITIES_EX",
+        "code": "0x00220450",
+        "ok": true,
+        "input_length": 4,
+        "input_hex_head": "00 00 00 00",
+        "output_buffer_size": 4,
+        "bytes_returned": 4,
+        "raw_hex": "12 00 00 00",
+        "decoded": {
+          "CapabilityFlags": {
+            "value": 18,
+            "hex": "0x00000012",
+            "binary": "00000000000000000000000000010010",
+            "bits": {
+              "HubIsHighSpeedCapable": false,
+              "HubIsHighSpeed": true,
+              "HubIsMultiTtCapable": false,
+              "HubIsMultiTt": false,
+              "HubIsRoot": true,
+              "HubIsArmedWakeOnConnect": false,
+              "HubIsBusPowered": false
+            },
+            "unknown_bits_hex": "0x00000000"
+          }
+        }
+      },
+      "port_count_source": "hub_information_ex.HighestPortNumber",
+      "port_count": 26,
+      "ports": [
+        {
+          "port": 1,
+          "connection_information_ex": {
+            "ioctl": "IOCTL_USB_GET_NODE_CONNECTION_INFORMATION_EX",
+            "code": "0x00220448",
+            "ok": true,
+            "input_length": 387,
+            "input_hex_head": "01 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00",
+            "output_buffer_size": 387,
+            "bytes_returned": 35,
+            "raw_hex": "00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00",
+            "decoded": {
+              "ConnectionIndex": 0,
+              "DeviceDescriptor": {
+                "bLength": 0,
+                "bDescriptorType": 0,
+                "bcdUSB": 0,
+                "bDeviceClass": 0,
+                "bDeviceSubClass": 0,
+                "bDeviceProtocol": 0,
+                "bMaxPacketSize0": 0,
+                "idVendor": 0,
+                "idProduct": 0,
+                "bcdDevice": 0,
+                "iManufacturer": 0,
+                "iProduct": 0,
+                "iSerialNumber": "REDACTED",
+                "bNumConfigurations": 0,
+                "bcdUSB_hex": "0x0000",
+                "idVendor_hex": "0x0000",
+                "idProduct_hex": "0x0000"
+              },
+              "CurrentConfigurationValue": 0,
+              "Speed": 0,
+              "Speed_name": "UsbLowSpeed",
+              "DeviceIsHub": false,
+              "DeviceAddress": 0,
+              "NumberOfOpenPipes": 0,
+              "ConnectionStatus": 0,
+              "ConnectionStatus_name": "NoDeviceConnected",
+              "PipeList": []
+            }
+          },
+          "connection_information_ex_v2": {
+            "ioctl": "IOCTL_USB_GET_NODE_CONNECTION_INFORMATION_EX_V2",
+            "code": "0x0022045C",
+            "ok": true,
+            "input_length": 16,
+            "input_hex_head": "01 00 00 00 10 00 00 00 04 00 00 00 00 00 00 00",
+            "output_buffer_size": 16,
+            "bytes_returned": 16,
+            "raw_hex": "01 00 00 00 10 00 00 00 03 00 00 00 00 00 00 00",
+            "decoded": {
+              "ConnectionIndex": 1,
+              "Length": 16,
+              "SupportedUsbProtocols": {
+                "value": 3,
+                "hex": "0x00000003",
+                "binary": "00000000000000000000000000000011",
+                "bits": {
+                  "Usb110": true,
+                  "Usb200": true,
+                  "Usb300": false
+                },
+                "unknown_bits_hex": "0x00000000"
+              },
+              "Flags": {
+                "value": 0,
+                "hex": "0x00000000",
+                "binary": "00000000000000000000000000000000",
+                "bits": {
+                  "DeviceIsOperatingAtSuperSpeedOrHigher": false,
+                  "DeviceIsSuperSpeedCapableOrHigher": false,
+                  "DeviceIsOperatingAtSuperSpeedPlusOrHigher": false,
+                  "DeviceIsSuperSpeedPlusCapableOrHigher": false
+                },
+                "unknown_bits_hex": "0x00000000"
+              }
+            }
+          },
+          "port_connector_properties": {
+            "ioctl": "IOCTL_USB_GET_PORT_CONNECTOR_PROPERTIES",
+            "code": "0x00220458",
+            "ok": true,
+            "input_length": 18,
+            "input_hex_head": "01 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00",
+            "output_buffer_size": 18,
+            "bytes_returned": 18,
+            "raw_hex": "01 00 00 00 12 00 00 00 01 00 00 00 00 00 00 00",
+            "raw_hex_note": "先頭 16 バイトのみ（以降は UTF-16 文字列。サニタイズのため decoded 側に記録）",
+            "decoded": {
+              "ConnectionIndex": 1,
+              "ActualLength": 18,
+              "UsbPortProperties": {
+                "value": 1,
+                "hex": "0x00000001",
+                "binary": "00000000000000000000000000000001",
+                "bits": {
+                  "PortIsUserConnectable": true,
+                  "PortIsDebugCapable": false,
+                  "PortHasMultipleCompanions": false,
+                  "PortConnectorIsTypeC": false
+                },
+                "unknown_bits_hex": "0x00000000"
+              },
+              "CompanionIndex": 0,
+              "CompanionPortNumber": 0,
+              "CompanionHubSymbolicLinkName": ""
+            }
+          },
+          "device": null
+        },
+        {
+          "port": 2,
+          "connection_information_ex": {
+            "ioctl": "IOCTL_USB_GET_NODE_CONNECTION_INFORMATION_EX",
+            "code": "0x00220448",
+            "ok": true,
+            "input_length": 387,
+            "input_hex_head": "02 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00",
+            "output_buffer_size": 387,
+            "bytes_returned": 35,
+            "raw_hex": "00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00",
+            "decoded": {
+              "ConnectionIndex": 0,
+              "DeviceDescriptor": {
+                "bLength": 0,
+                "bDescriptorType": 0,
+                "bcdUSB": 0,
+                "bDeviceClass": 0,
+                "bDeviceSubClass": 0,
+                "bDeviceProtocol": 0,
+                "bMaxPacketSize0": 0,
+                "idVendor": 0,
+                "idProduct": 0,
+                "bcdDevice": 0,
+                "iManufacturer": 0,
+                "iProduct": 0,
+                "iSerialNumber": "REDACTED",
+                "bNumConfigurations": 0,
+                "bcdUSB_hex": "0x0000",
+                "idVendor_hex": "0x0000",
+                "idProduct_hex": "0x0000"
+              },
+              "CurrentConfigurationValue": 0,
+              "Speed": 0,
+              "Speed_name": "UsbLowSpeed",
+              "DeviceIsHub": false,
+              "DeviceAddress": 0,
+              "NumberOfOpenPipes": 0,
+              "ConnectionStatus": 0,
+              "ConnectionStatus_name": "NoDeviceConnected",
+              "PipeList": []
+            }
+          },
+          "connection_information_ex_v2": {
+            "ioctl": "IOCTL_USB_GET_NODE_CONNECTION_INFORMATION_EX_V2",
+            "code": "0x0022045C",
+            "ok": true,
+            "input_length": 16,
+            "input_hex_head": "02 00 00 00 10 00 00 00 04 00 00 00 00 00 00 00",
+            "output_buffer_size": 16,
+            "bytes_returned": 16,
+            "raw_hex": "02 00 00 00 10 00 00 00 03 00 00 00 00 00 00 00",
+            "decoded": {
+              "ConnectionIndex": 2,
+              "Length": 16,
+              "SupportedUsbProtocols": {
+                "value": 3,
+                "hex": "0x00000003",
+                "binary": "00000000000000000000000000000011",
+                "bits": {
+                  "Usb110": true,
+                  "Usb200": true,
+                  "Usb300": false
+                },
+                "unknown_bits_hex": "0x00000000"
+              },
+              "Flags": {
+                "value": 0,
+                "hex": "0x00000000",
+                "binary": "00000000000000000000000000000000",
+                "bits": {
+                  "DeviceIsOperatingAtSuperSpeedOrHigher": false,
+                  "DeviceIsSuperSpeedCapableOrHigher": false,
+                  "DeviceIsOperatingAtSuperSpeedPlusOrHigher": false,
+                  "DeviceIsSuperSpeedPlusCapableOrHigher": false
+                },
+                "unknown_bits_hex": "0x00000000"
+              }
+            }
+          },
+          "port_connector_properties": {
+            "ioctl": "IOCTL_USB_GET_PORT_CONNECTOR_PROPERTIES",
+            "code": "0x00220458",
+            "ok": true,
+            "input_length": 18,
+            "input_hex_head": "02 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00",
+            "output_buffer_size": 18,
+            "bytes_returned": 18,
+            "raw_hex": "02 00 00 00 12 00 00 00 00 00 00 00 00 00 00 00",
+            "raw_hex_note": "先頭 16 バイトのみ（以降は UTF-16 文字列。サニタイズのため decoded 側に記録）",
+            "decoded": {
+              "ConnectionIndex": 2,
+              "ActualLength": 18,
+              "UsbPortProperties": {
+                "value": 0,
+                "hex": "0x00000000",
+                "binary": "00000000000000000000000000000000",
+                "bits": {
+                  "PortIsUserConnectable": false,
+                  "PortIsDebugCapable": false,
+                  "PortHasMultipleCompanions": false,
+                  "PortConnectorIsTypeC": false
+                },
+                "unknown_bits_hex": "0x00000000"
+              },
+              "CompanionIndex": 0,
+              "CompanionPortNumber": 0,
+              "CompanionHubSymbolicLinkName": ""
+            }
+          },
+          "device": null
+        },
+        {
+          "port": 3,
+          "connection_information_ex": {
+            "ioctl": "IOCTL_USB_GET_NODE_CONNECTION_INFORMATION_EX",
+            "code": "0x00220448",
+            "ok": true,
+            "input_length": 387,
+            "input_hex_head": "03 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00",
+            "output_buffer_size": 387,
+            "bytes_returned": 123,
+            "raw_hex": "03 00 00 00 12 01 00 02 ef 02 01 40 9c a6 81 8d 00 01 01 02 03 01 01 02 00 01 00 08 00 00 00 01 00 00 00 07 05 83 03 40 00 03 00 00 00 00 07 05 84 02 00 02 00 00 00 00 00 07 05 04 02 00 02 00 00 00 00 00 07 05 85 01 00 00 04 00 00 00 00 07 05 05 01 00 00 04 00 00 00 00 07 05 01 02 00 02 00 00 00 00 00 07 05 81 02 00 02 00 00 00 00 00 07 05 02 02 00 02 00 00 00 00 00",
+            "decoded": {
+              "ConnectionIndex": 3,
+              "DeviceDescriptor": {
+                "bLength": 18,
+                "bDescriptorType": 1,
+                "bcdUSB": 512,
+                "bDeviceClass": 239,
+                "bDeviceSubClass": 2,
+                "bDeviceProtocol": 1,
+                "bMaxPacketSize0": 64,
+                "idVendor": 42652,
+                "idProduct": 36225,
+                "bcdDevice": 256,
+                "iManufacturer": 1,
+                "iProduct": 2,
+                "iSerialNumber": "REDACTED",
+                "bNumConfigurations": 1,
+                "bcdUSB_hex": "0x0200",
+                "idVendor_hex": "0xA69C",
+                "idProduct_hex": "0x8D81"
+              },
+              "CurrentConfigurationValue": 1,
+              "Speed": 2,
+              "Speed_name": "UsbHighSpeed",
+              "DeviceIsHub": false,
+              "DeviceAddress": 1,
+              "NumberOfOpenPipes": 8,
+              "ConnectionStatus": 1,
+              "ConnectionStatus_name": "DeviceConnected",
+              "PipeList": [
+                {
+                  "bEndpointAddress": 131,
+                  "bmAttributes": 3,
+                  "wMaxPacketSize": 64,
+                  "bInterval": 3,
+                  "ScheduleOffset": 0
+                },
+                {
+                  "bEndpointAddress": 132,
+                  "bmAttributes": 2,
+                  "wMaxPacketSize": 512,
+                  "bInterval": 0,
+                  "ScheduleOffset": 0
+                },
+                {
+                  "bEndpointAddress": 4,
+                  "bmAttributes": 2,
+                  "wMaxPacketSize": 512,
+                  "bInterval": 0,
+                  "ScheduleOffset": 0
+                },
+                {
+                  "bEndpointAddress": 133,
+                  "bmAttributes": 1,
+                  "wMaxPacketSize": 0,
+                  "bInterval": 4,
+                  "ScheduleOffset": 0
+                },
+                {
+                  "bEndpointAddress": 5,
+                  "bmAttributes": 1,
+                  "wMaxPacketSize": 0,
+                  "bInterval": 4,
+                  "ScheduleOffset": 0
+                },
+                {
+                  "bEndpointAddress": 1,
+                  "bmAttributes": 2,
+                  "wMaxPacketSize": 512,
+                  "bInterval": 0,
+                  "ScheduleOffset": 0
+                },
+                {
+                  "bEndpointAddress": 129,
+                  "bmAttributes": 2,
+                  "wMaxPacketSize": 512,
+                  "bInterval": 0,
+                  "ScheduleOffset": 0
+                },
+                {
+                  "bEndpointAddress": 2,
+                  "bmAttributes": 2,
+                  "wMaxPacketSize": 512,
+                  "bInterval": 0,
+                  "ScheduleOffset": 0
+                }
+              ]
+            }
+          },
+          "connection_information_ex_v2": {
+            "ioctl": "IOCTL_USB_GET_NODE_CONNECTION_INFORMATION_EX_V2",
+            "code": "0x0022045C",
+            "ok": true,
+            "input_length": 16,
+            "input_hex_head": "03 00 00 00 10 00 00 00 04 00 00 00 00 00 00 00",
+            "output_buffer_size": 16,
+            "bytes_returned": 16,
+            "raw_hex": "03 00 00 00 10 00 00 00 03 00 00 00 00 00 00 00",
+            "decoded": {
+              "ConnectionIndex": 3,
+              "Length": 16,
+              "SupportedUsbProtocols": {
+                "value": 3,
+                "hex": "0x00000003",
+                "binary": "00000000000000000000000000000011",
+                "bits": {
+                  "Usb110": true,
+                  "Usb200": true,
+                  "Usb300": false
+                },
+                "unknown_bits_hex": "0x00000000"
+              },
+              "Flags": {
+                "value": 0,
+                "hex": "0x00000000",
+                "binary": "00000000000000000000000000000000",
+                "bits": {
+                  "DeviceIsOperatingAtSuperSpeedOrHigher": false,
+                  "DeviceIsSuperSpeedCapableOrHigher": false,
+                  "DeviceIsOperatingAtSuperSpeedPlusOrHigher": false,
+                  "DeviceIsSuperSpeedPlusCapableOrHigher": false
+                },
+                "unknown_bits_hex": "0x00000000"
+              }
+            }
+          },
+          "port_connector_properties": {
+            "ioctl": "IOCTL_USB_GET_PORT_CONNECTOR_PROPERTIES",
+            "code": "0x00220458",
+            "ok": true,
+            "input_length": 18,
+            "input_hex_head": "03 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00",
+            "output_buffer_size": 18,
+            "bytes_returned": 18,
+            "raw_hex": "03 00 00 00 12 00 00 00 01 00 00 00 00 00 00 00",
+            "raw_hex_note": "先頭 16 バイトのみ（以降は UTF-16 文字列。サニタイズのため decoded 側に記録）",
+            "decoded": {
+              "ConnectionIndex": 3,
+              "ActualLength": 18,
+              "UsbPortProperties": {
+                "value": 1,
+                "hex": "0x00000001",
+                "binary": "00000000000000000000000000000001",
+                "bits": {
+                  "PortIsUserConnectable": true,
+                  "PortIsDebugCapable": false,
+                  "PortHasMultipleCompanions": false,
+                  "PortConnectorIsTypeC": false
+                },
+                "unknown_bits_hex": "0x00000000"
+              },
+              "CompanionIndex": 0,
+              "CompanionPortNumber": 0,
+              "CompanionHubSymbolicLinkName": ""
+            }
+          },
+          "device": {
+            "instance_id": "USB\\VID_A69C&PID_8D81\\REDACTED",
+            "parent_instance_id": "USB\\ROOT_HUB30\\4&1FEEF4EE&0&0",
+            "description": "USB Composite Device",
+            "friendly_name": null,
+            "bus_reported_description": "AIC 8800D80",
+            "driver_key": "{36fc9e60-c465-11cf-8056-444553540000}\\0007",
+            "service": "usbccgp",
+            "location_information": "Port_#0003.Hub_#0001",
+            "location_paths": [
+              "PCIROOT(0)#PCI(1400)#USBROOT(0)#USB(3)",
+              "ACPI(_SB_)#ACPI(PCI0)#ACPI(XHC_)#ACPI(RHUB)#ACPI(HS03)"
+            ]
+          },
+          "driver_key_name": {
+            "ioctl": "IOCTL_USB_GET_NODE_CONNECTION_DRIVERKEY_NAME",
+            "code": "0x00220420",
+            "ok": true,
+            "input_length": 98,
+            "input_hex_head": "03 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00",
+            "output_buffer_size": 98,
+            "bytes_returned": 98,
+            "raw_hex": "03 00 00 00 62 00 00 00",
+            "raw_hex_note": "先頭 8 バイトのみ（以降は UTF-16 文字列。サニタイズのため decoded 側に記録）",
+            "decoded": {
+              "ConnectionIndex": 3,
+              "ActualLength": 98,
+              "Name": "{36fc9e60-c465-11cf-8056-444553540000}\\0007"
+            }
+          }
+        },
+        {
+          "port": 4,
+          "connection_information_ex": {
+            "ioctl": "IOCTL_USB_GET_NODE_CONNECTION_INFORMATION_EX",
+            "code": "0x00220448",
+            "ok": true,
+            "input_length": 387,
+            "input_hex_head": "04 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00",
+            "output_buffer_size": 387,
+            "bytes_returned": 68,
+            "raw_hex": "04 00 00 00 12 01 10 01 00 00 00 40 06 32 32 10 01 00 01 02 03 01 01 01 00 02 00 03 00 00 00 01 00 00 00 07 05 84 03 40 00 03 00 00 00 00 07 05 04 03 40 00 03 00 00 00 00 09 05 01 01 c0 00 01 00 00 00 00",
+            "decoded": {
+              "ConnectionIndex": 4,
+              "DeviceDescriptor": {
+                "bLength": 18,
+                "bDescriptorType": 1,
+                "bcdUSB": 272,
+                "bDeviceClass": 0,
+                "bDeviceSubClass": 0,
+                "bDeviceProtocol": 0,
+                "bMaxPacketSize0": 64,
+                "idVendor": 12806,
+                "idProduct": 4146,
+                "bcdDevice": 1,
+                "iManufacturer": 1,
+                "iProduct": 2,
+                "iSerialNumber": "REDACTED",
+                "bNumConfigurations": 1,
+                "bcdUSB_hex": "0x0110",
+                "idVendor_hex": "0x3206",
+                "idProduct_hex": "0x1032"
+              },
+              "CurrentConfigurationValue": 1,
+              "Speed": 1,
+              "Speed_name": "UsbFullSpeed",
+              "DeviceIsHub": false,
+              "DeviceAddress": 2,
+              "NumberOfOpenPipes": 3,
+              "ConnectionStatus": 1,
+              "ConnectionStatus_name": "DeviceConnected",
+              "PipeList": [
+                {
+                  "bEndpointAddress": 132,
+                  "bmAttributes": 3,
+                  "wMaxPacketSize": 64,
+                  "bInterval": 3,
+                  "ScheduleOffset": 0
+                },
+                {
+                  "bEndpointAddress": 4,
+                  "bmAttributes": 3,
+                  "wMaxPacketSize": 64,
+                  "bInterval": 3,
+                  "ScheduleOffset": 0
+                },
+                {
+                  "bEndpointAddress": 1,
+                  "bmAttributes": 1,
+                  "wMaxPacketSize": 192,
+                  "bInterval": 1,
+                  "ScheduleOffset": 0
+                }
+              ]
+            }
+          },
+          "connection_information_ex_v2": {
+            "ioctl": "IOCTL_USB_GET_NODE_CONNECTION_INFORMATION_EX_V2",
+            "code": "0x0022045C",
+            "ok": true,
+            "input_length": 16,
+            "input_hex_head": "04 00 00 00 10 00 00 00 04 00 00 00 00 00 00 00",
+            "output_buffer_size": 16,
+            "bytes_returned": 16,
+            "raw_hex": "04 00 00 00 10 00 00 00 03 00 00 00 00 00 00 00",
+            "decoded": {
+              "ConnectionIndex": 4,
+              "Length": 16,
+              "SupportedUsbProtocols": {
+                "value": 3,
+                "hex": "0x00000003",
+                "binary": "00000000000000000000000000000011",
+                "bits": {
+                  "Usb110": true,
+                  "Usb200": true,
+                  "Usb300": false
+                },
+                "unknown_bits_hex": "0x00000000"
+              },
+              "Flags": {
+                "value": 0,
+                "hex": "0x00000000",
+                "binary": "00000000000000000000000000000000",
+                "bits": {
+                  "DeviceIsOperatingAtSuperSpeedOrHigher": false,
+                  "DeviceIsSuperSpeedCapableOrHigher": false,
+                  "DeviceIsOperatingAtSuperSpeedPlusOrHigher": false,
+                  "DeviceIsSuperSpeedPlusCapableOrHigher": false
+                },
+                "unknown_bits_hex": "0x00000000"
+              }
+            }
+          },
+          "port_connector_properties": {
+            "ioctl": "IOCTL_USB_GET_PORT_CONNECTOR_PROPERTIES",
+            "code": "0x00220458",
+            "ok": true,
+            "input_length": 18,
+            "input_hex_head": "04 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00",
+            "output_buffer_size": 18,
+            "bytes_returned": 18,
+            "raw_hex": "04 00 00 00 12 00 00 00 01 00 00 00 00 00 00 00",
+            "raw_hex_note": "先頭 16 バイトのみ（以降は UTF-16 文字列。サニタイズのため decoded 側に記録）",
+            "decoded": {
+              "ConnectionIndex": 4,
+              "ActualLength": 18,
+              "UsbPortProperties": {
+                "value": 1,
+                "hex": "0x00000001",
+                "binary": "00000000000000000000000000000001",
+                "bits": {
+                  "PortIsUserConnectable": true,
+                  "PortIsDebugCapable": false,
+                  "PortHasMultipleCompanions": false,
+                  "PortConnectorIsTypeC": false
+                },
+                "unknown_bits_hex": "0x00000000"
+              },
+              "CompanionIndex": 0,
+              "CompanionPortNumber": 0,
+              "CompanionHubSymbolicLinkName": ""
+            }
+          },
+          "device": {
+            "instance_id": "USB\\VID_3206&PID_1032\\REDACTED",
+            "parent_instance_id": "USB\\ROOT_HUB30\\4&1FEEF4EE&0&0",
+            "description": "USB Composite Device",
+            "friendly_name": null,
+            "bus_reported_description": "EKSA-H2",
+            "driver_key": "{36fc9e60-c465-11cf-8056-444553540000}\\0011",
+            "service": "usbccgp",
+            "location_information": "Port_#0004.Hub_#0001",
+            "location_paths": [
+              "PCIROOT(0)#PCI(1400)#USBROOT(0)#USB(4)",
+              "ACPI(_SB_)#ACPI(PCI0)#ACPI(XHC_)#ACPI(RHUB)#ACPI(HS04)"
+            ]
+          },
+          "driver_key_name": {
+            "ioctl": "IOCTL_USB_GET_NODE_CONNECTION_DRIVERKEY_NAME",
+            "code": "0x00220420",
+            "ok": true,
+            "input_length": 98,
+            "input_hex_head": "04 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00",
+            "output_buffer_size": 98,
+            "bytes_returned": 98,
+            "raw_hex": "04 00 00 00 62 00 00 00",
+            "raw_hex_note": "先頭 8 バイトのみ（以降は UTF-16 文字列。サニタイズのため decoded 側に記録）",
+            "decoded": {
+              "ConnectionIndex": 4,
+              "ActualLength": 98,
+              "Name": "{36fc9e60-c465-11cf-8056-444553540000}\\0011"
+            }
+          }
+        },
+        {
+          "port": 5,
+          "connection_information_ex": {
+            "ioctl": "IOCTL_USB_GET_NODE_CONNECTION_INFORMATION_EX",
+            "code": "0x00220448",
+            "ok": true,
+            "input_length": 387,
+            "input_hex_head": "05 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00",
+            "output_buffer_size": 387,
+            "bytes_returned": 46,
+            "raw_hex": "05 00 00 00 12 01 10 01 00 00 00 08 fa 30 00 03 00 01 00 01 00 01 01 00 00 0b 00 01 00 00 00 01 00 00 00 07 05 81 03 05 00 0a 00 00 00 00",
+            "decoded": {
+              "ConnectionIndex": 5,
+              "DeviceDescriptor": {
+                "bLength": 18,
+                "bDescriptorType": 1,
+                "bcdUSB": 272,
+                "bDeviceClass": 0,
+                "bDeviceSubClass": 0,
+                "bDeviceProtocol": 0,
+                "bMaxPacketSize0": 8,
+                "idVendor": 12538,
+                "idProduct": 768,
+                "bcdDevice": 256,
+                "iManufacturer": 0,
+                "iProduct": 1,
+                "iSerialNumber": "REDACTED",
+                "bNumConfigurations": 1,
+                "bcdUSB_hex": "0x0110",
+                "idVendor_hex": "0x30FA",
+                "idProduct_hex": "0x0300"
+              },
+              "CurrentConfigurationValue": 1,
+              "Speed": 0,
+              "Speed_name": "UsbLowSpeed",
+              "DeviceIsHub": false,
+              "DeviceAddress": 11,
+              "NumberOfOpenPipes": 1,
+              "ConnectionStatus": 1,
+              "ConnectionStatus_name": "DeviceConnected",
+              "PipeList": [
+                {
+                  "bEndpointAddress": 129,
+                  "bmAttributes": 3,
+                  "wMaxPacketSize": 5,
+                  "bInterval": 10,
+                  "ScheduleOffset": 0
+                }
+              ]
+            }
+          },
+          "connection_information_ex_v2": {
+            "ioctl": "IOCTL_USB_GET_NODE_CONNECTION_INFORMATION_EX_V2",
+            "code": "0x0022045C",
+            "ok": true,
+            "input_length": 16,
+            "input_hex_head": "05 00 00 00 10 00 00 00 04 00 00 00 00 00 00 00",
+            "output_buffer_size": 16,
+            "bytes_returned": 16,
+            "raw_hex": "05 00 00 00 10 00 00 00 03 00 00 00 00 00 00 00",
+            "decoded": {
+              "ConnectionIndex": 5,
+              "Length": 16,
+              "SupportedUsbProtocols": {
+                "value": 3,
+                "hex": "0x00000003",
+                "binary": "00000000000000000000000000000011",
+                "bits": {
+                  "Usb110": true,
+                  "Usb200": true,
+                  "Usb300": false
+                },
+                "unknown_bits_hex": "0x00000000"
+              },
+              "Flags": {
+                "value": 0,
+                "hex": "0x00000000",
+                "binary": "00000000000000000000000000000000",
+                "bits": {
+                  "DeviceIsOperatingAtSuperSpeedOrHigher": false,
+                  "DeviceIsSuperSpeedCapableOrHigher": false,
+                  "DeviceIsOperatingAtSuperSpeedPlusOrHigher": false,
+                  "DeviceIsSuperSpeedPlusCapableOrHigher": false
+                },
+                "unknown_bits_hex": "0x00000000"
+              }
+            }
+          },
+          "port_connector_properties": {
+            "ioctl": "IOCTL_USB_GET_PORT_CONNECTOR_PROPERTIES",
+            "code": "0x00220458",
+            "ok": true,
+            "input_length": 154,
+            "input_hex_head": "05 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00",
+            "output_buffer_size": 154,
+            "bytes_returned": 154,
+            "raw_hex": "05 00 00 00 9a 00 00 00 01 00 00 00 00 00 19 00",
+            "raw_hex_note": "先頭 16 バイトのみ（以降は UTF-16 文字列。サニタイズのため decoded 側に記録）",
+            "decoded": {
+              "ConnectionIndex": 5,
+              "ActualLength": 154,
+              "UsbPortProperties": {
+                "value": 1,
+                "hex": "0x00000001",
+                "binary": "00000000000000000000000000000001",
+                "bits": {
+                  "PortIsUserConnectable": true,
+                  "PortIsDebugCapable": false,
+                  "PortHasMultipleCompanions": false,
+                  "PortConnectorIsTypeC": false
+                },
+                "unknown_bits_hex": "0x00000000"
+              },
+              "CompanionIndex": 0,
+              "CompanionPortNumber": 25,
+              "CompanionHubSymbolicLinkName": "USB#ROOT_HUB30#4&1feef4ee&0&0#{f18a0e88-c30c-11d0-8815-00a0c906bed8}"
+            }
+          },
+          "device": {
+            "instance_id": "USB\\VID_30FA&PID_0300\\REDACTED",
+            "parent_instance_id": "USB\\ROOT_HUB30\\4&1FEEF4EE&0&0",
+            "description": "USB 入力デバイス",
+            "friendly_name": null,
+            "bus_reported_description": "USB Optical Mouse ",
+            "driver_key": "{745a17a0-74d3-11d0-b6fe-00a0c90f57da}\\0025",
+            "service": "HidUsb",
+            "location_information": "Port_#0005.Hub_#0001",
+            "location_paths": [
+              "PCIROOT(0)#PCI(1400)#USBROOT(0)#USB(5)",
+              "ACPI(_SB_)#ACPI(PCI0)#ACPI(XHC_)#ACPI(RHUB)#ACPI(HS05)"
+            ]
+          },
+          "driver_key_name": {
+            "ioctl": "IOCTL_USB_GET_NODE_CONNECTION_DRIVERKEY_NAME",
+            "code": "0x00220420",
+            "ok": true,
+            "input_length": 98,
+            "input_hex_head": "05 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00",
+            "output_buffer_size": 98,
+            "bytes_returned": 98,
+            "raw_hex": "05 00 00 00 62 00 00 00",
+            "raw_hex_note": "先頭 8 バイトのみ（以降は UTF-16 文字列。サニタイズのため decoded 側に記録）",
+            "decoded": {
+              "ConnectionIndex": 5,
+              "ActualLength": 98,
+              "Name": "{745a17a0-74d3-11d0-b6fe-00a0c90f57da}\\0025"
+            }
+          }
+        },
+        {
+          "port": 6,
+          "connection_information_ex": {
+            "ioctl": "IOCTL_USB_GET_NODE_CONNECTION_INFORMATION_EX",
+            "code": "0x00220448",
+            "ok": true,
+            "input_length": 387,
+            "input_hex_head": "06 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00",
+            "output_buffer_size": 387,
+            "bytes_returned": 46,
+            "raw_hex": "06 00 00 00 12 01 00 02 ef 02 01 40 e6 32 21 92 00 00 01 02 03 01 01 02 00 04 00 01 00 00 00 01 00 00 00 07 05 81 03 10 00 06 00 00 00 00",
+            "decoded": {
+              "ConnectionIndex": 6,
+              "DeviceDescriptor": {
+                "bLength": 18,
+                "bDescriptorType": 1,
+                "bcdUSB": 512,
+                "bDeviceClass": 239,
+                "bDeviceSubClass": 2,
+                "bDeviceProtocol": 1,
+                "bMaxPacketSize0": 64,
+                "idVendor": 13030,
+                "idProduct": 37409,
+                "bcdDevice": 0,
+                "iManufacturer": 1,
+                "iProduct": 2,
+                "iSerialNumber": "REDACTED",
+                "bNumConfigurations": 1,
+                "bcdUSB_hex": "0x0200",
+                "idVendor_hex": "0x32E6",
+                "idProduct_hex": "0x9221"
+              },
+              "CurrentConfigurationValue": 1,
+              "Speed": 2,
+              "Speed_name": "UsbHighSpeed",
+              "DeviceIsHub": false,
+              "DeviceAddress": 4,
+              "NumberOfOpenPipes": 1,
+              "ConnectionStatus": 1,
+              "ConnectionStatus_name": "DeviceConnected",
+              "PipeList": [
+                {
+                  "bEndpointAddress": 129,
+                  "bmAttributes": 3,
+                  "wMaxPacketSize": 16,
+                  "bInterval": 6,
+                  "ScheduleOffset": 0
+                }
+              ]
+            }
+          },
+          "connection_information_ex_v2": {
+            "ioctl": "IOCTL_USB_GET_NODE_CONNECTION_INFORMATION_EX_V2",
+            "code": "0x0022045C",
+            "ok": true,
+            "input_length": 16,
+            "input_hex_head": "06 00 00 00 10 00 00 00 04 00 00 00 00 00 00 00",
+            "output_buffer_size": 16,
+            "bytes_returned": 16,
+            "raw_hex": "06 00 00 00 10 00 00 00 03 00 00 00 00 00 00 00",
+            "decoded": {
+              "ConnectionIndex": 6,
+              "Length": 16,
+              "SupportedUsbProtocols": {
+                "value": 3,
+                "hex": "0x00000003",
+                "binary": "00000000000000000000000000000011",
+                "bits": {
+                  "Usb110": true,
+                  "Usb200": true,
+                  "Usb300": false
+                },
+                "unknown_bits_hex": "0x00000000"
+              },
+              "Flags": {
+                "value": 0,
+                "hex": "0x00000000",
+                "binary": "00000000000000000000000000000000",
+                "bits": {
+                  "DeviceIsOperatingAtSuperSpeedOrHigher": false,
+                  "DeviceIsSuperSpeedCapableOrHigher": false,
+                  "DeviceIsOperatingAtSuperSpeedPlusOrHigher": false,
+                  "DeviceIsSuperSpeedPlusCapableOrHigher": false
+                },
+                "unknown_bits_hex": "0x00000000"
+              }
+            }
+          },
+          "port_connector_properties": {
+            "ioctl": "IOCTL_USB_GET_PORT_CONNECTOR_PROPERTIES",
+            "code": "0x00220458",
+            "ok": true,
+            "input_length": 154,
+            "input_hex_head": "06 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00",
+            "output_buffer_size": 154,
+            "bytes_returned": 154,
+            "raw_hex": "06 00 00 00 9a 00 00 00 01 00 00 00 00 00 15 00",
+            "raw_hex_note": "先頭 16 バイトのみ（以降は UTF-16 文字列。サニタイズのため decoded 側に記録）",
+            "decoded": {
+              "ConnectionIndex": 6,
+              "ActualLength": 154,
+              "UsbPortProperties": {
+                "value": 1,
+                "hex": "0x00000001",
+                "binary": "00000000000000000000000000000001",
+                "bits": {
+                  "PortIsUserConnectable": true,
+                  "PortIsDebugCapable": false,
+                  "PortHasMultipleCompanions": false,
+                  "PortConnectorIsTypeC": false
+                },
+                "unknown_bits_hex": "0x00000000"
+              },
+              "CompanionIndex": 0,
+              "CompanionPortNumber": 21,
+              "CompanionHubSymbolicLinkName": "USB#ROOT_HUB30#4&1feef4ee&0&0#{f18a0e88-c30c-11d0-8815-00a0c906bed8}"
+            }
+          },
+          "device": {
+            "instance_id": "USB\\VID_32E6&PID_9221\\REDACTED",
+            "parent_instance_id": "USB\\ROOT_HUB30\\4&1FEEF4EE&0&0",
+            "description": "USB Composite Device",
+            "friendly_name": null,
+            "bus_reported_description": "Web Camera",
+            "driver_key": "{36fc9e60-c465-11cf-8056-444553540000}\\0010",
+            "service": "usbccgp",
+            "location_information": "Port_#0006.Hub_#0001",
+            "location_paths": [
+              "PCIROOT(0)#PCI(1400)#USBROOT(0)#USB(6)",
+              "ACPI(_SB_)#ACPI(PCI0)#ACPI(XHC_)#ACPI(RHUB)#ACPI(HS06)"
+            ]
+          },
+          "driver_key_name": {
+            "ioctl": "IOCTL_USB_GET_NODE_CONNECTION_DRIVERKEY_NAME",
+            "code": "0x00220420",
+            "ok": true,
+            "input_length": 98,
+            "input_hex_head": "06 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00",
+            "output_buffer_size": 98,
+            "bytes_returned": 98,
+            "raw_hex": "06 00 00 00 62 00 00 00",
+            "raw_hex_note": "先頭 8 バイトのみ（以降は UTF-16 文字列。サニタイズのため decoded 側に記録）",
+            "decoded": {
+              "ConnectionIndex": 6,
+              "ActualLength": 98,
+              "Name": "{36fc9e60-c465-11cf-8056-444553540000}\\0010"
+            }
+          }
+        },
+        {
+          "port": 7,
+          "connection_information_ex": {
+            "ioctl": "IOCTL_USB_GET_NODE_CONNECTION_INFORMATION_EX",
+            "code": "0x00220448",
+            "ok": true,
+            "input_length": 387,
+            "input_hex_head": "07 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00",
+            "output_buffer_size": 387,
+            "bytes_returned": 35,
+            "raw_hex": "00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00",
+            "decoded": {
+              "ConnectionIndex": 0,
+              "DeviceDescriptor": {
+                "bLength": 0,
+                "bDescriptorType": 0,
+                "bcdUSB": 0,
+                "bDeviceClass": 0,
+                "bDeviceSubClass": 0,
+                "bDeviceProtocol": 0,
+                "bMaxPacketSize0": 0,
+                "idVendor": 0,
+                "idProduct": 0,
+                "bcdDevice": 0,
+                "iManufacturer": 0,
+                "iProduct": 0,
+                "iSerialNumber": "REDACTED",
+                "bNumConfigurations": 0,
+                "bcdUSB_hex": "0x0000",
+                "idVendor_hex": "0x0000",
+                "idProduct_hex": "0x0000"
+              },
+              "CurrentConfigurationValue": 0,
+              "Speed": 0,
+              "Speed_name": "UsbLowSpeed",
+              "DeviceIsHub": false,
+              "DeviceAddress": 0,
+              "NumberOfOpenPipes": 0,
+              "ConnectionStatus": 0,
+              "ConnectionStatus_name": "NoDeviceConnected",
+              "PipeList": []
+            }
+          },
+          "connection_information_ex_v2": {
+            "ioctl": "IOCTL_USB_GET_NODE_CONNECTION_INFORMATION_EX_V2",
+            "code": "0x0022045C",
+            "ok": true,
+            "input_length": 16,
+            "input_hex_head": "07 00 00 00 10 00 00 00 04 00 00 00 00 00 00 00",
+            "output_buffer_size": 16,
+            "bytes_returned": 16,
+            "raw_hex": "07 00 00 00 10 00 00 00 03 00 00 00 00 00 00 00",
+            "decoded": {
+              "ConnectionIndex": 7,
+              "Length": 16,
+              "SupportedUsbProtocols": {
+                "value": 3,
+                "hex": "0x00000003",
+                "binary": "00000000000000000000000000000011",
+                "bits": {
+                  "Usb110": true,
+                  "Usb200": true,
+                  "Usb300": false
+                },
+                "unknown_bits_hex": "0x00000000"
+              },
+              "Flags": {
+                "value": 0,
+                "hex": "0x00000000",
+                "binary": "00000000000000000000000000000000",
+                "bits": {
+                  "DeviceIsOperatingAtSuperSpeedOrHigher": false,
+                  "DeviceIsSuperSpeedCapableOrHigher": false,
+                  "DeviceIsOperatingAtSuperSpeedPlusOrHigher": false,
+                  "DeviceIsSuperSpeedPlusCapableOrHigher": false
+                },
+                "unknown_bits_hex": "0x00000000"
+              }
+            }
+          },
+          "port_connector_properties": {
+            "ioctl": "IOCTL_USB_GET_PORT_CONNECTOR_PROPERTIES",
+            "code": "0x00220458",
+            "ok": true,
+            "input_length": 154,
+            "input_hex_head": "07 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00",
+            "output_buffer_size": 154,
+            "bytes_returned": 154,
+            "raw_hex": "07 00 00 00 9a 00 00 00 01 00 00 00 00 00 18 00",
+            "raw_hex_note": "先頭 16 バイトのみ（以降は UTF-16 文字列。サニタイズのため decoded 側に記録）",
+            "decoded": {
+              "ConnectionIndex": 7,
+              "ActualLength": 154,
+              "UsbPortProperties": {
+                "value": 1,
+                "hex": "0x00000001",
+                "binary": "00000000000000000000000000000001",
+                "bits": {
+                  "PortIsUserConnectable": true,
+                  "PortIsDebugCapable": false,
+                  "PortHasMultipleCompanions": false,
+                  "PortConnectorIsTypeC": false
+                },
+                "unknown_bits_hex": "0x00000000"
+              },
+              "CompanionIndex": 0,
+              "CompanionPortNumber": 24,
+              "CompanionHubSymbolicLinkName": "USB#ROOT_HUB30#4&1feef4ee&0&0#{f18a0e88-c30c-11d0-8815-00a0c906bed8}"
+            }
+          },
+          "device": null
+        },
+        {
+          "port": 8,
+          "connection_information_ex": {
+            "ioctl": "IOCTL_USB_GET_NODE_CONNECTION_INFORMATION_EX",
+            "code": "0x00220448",
+            "ok": true,
+            "input_length": 387,
+            "input_hex_head": "08 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00",
+            "output_buffer_size": 387,
+            "bytes_returned": 35,
+            "raw_hex": "00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00",
+            "decoded": {
+              "ConnectionIndex": 0,
+              "DeviceDescriptor": {
+                "bLength": 0,
+                "bDescriptorType": 0,
+                "bcdUSB": 0,
+                "bDeviceClass": 0,
+                "bDeviceSubClass": 0,
+                "bDeviceProtocol": 0,
+                "bMaxPacketSize0": 0,
+                "idVendor": 0,
+                "idProduct": 0,
+                "bcdDevice": 0,
+                "iManufacturer": 0,
+                "iProduct": 0,
+                "iSerialNumber": "REDACTED",
+                "bNumConfigurations": 0,
+                "bcdUSB_hex": "0x0000",
+                "idVendor_hex": "0x0000",
+                "idProduct_hex": "0x0000"
+              },
+              "CurrentConfigurationValue": 0,
+              "Speed": 0,
+              "Speed_name": "UsbLowSpeed",
+              "DeviceIsHub": false,
+              "DeviceAddress": 0,
+              "NumberOfOpenPipes": 0,
+              "ConnectionStatus": 0,
+              "ConnectionStatus_name": "NoDeviceConnected",
+              "PipeList": []
+            }
+          },
+          "connection_information_ex_v2": {
+            "ioctl": "IOCTL_USB_GET_NODE_CONNECTION_INFORMATION_EX_V2",
+            "code": "0x0022045C",
+            "ok": true,
+            "input_length": 16,
+            "input_hex_head": "08 00 00 00 10 00 00 00 04 00 00 00 00 00 00 00",
+            "output_buffer_size": 16,
+            "bytes_returned": 16,
+            "raw_hex": "08 00 00 00 10 00 00 00 03 00 00 00 00 00 00 00",
+            "decoded": {
+              "ConnectionIndex": 8,
+              "Length": 16,
+              "SupportedUsbProtocols": {
+                "value": 3,
+                "hex": "0x00000003",
+                "binary": "00000000000000000000000000000011",
+                "bits": {
+                  "Usb110": true,
+                  "Usb200": true,
+                  "Usb300": false
+                },
+                "unknown_bits_hex": "0x00000000"
+              },
+              "Flags": {
+                "value": 0,
+                "hex": "0x00000000",
+                "binary": "00000000000000000000000000000000",
+                "bits": {
+                  "DeviceIsOperatingAtSuperSpeedOrHigher": false,
+                  "DeviceIsSuperSpeedCapableOrHigher": false,
+                  "DeviceIsOperatingAtSuperSpeedPlusOrHigher": false,
+                  "DeviceIsSuperSpeedPlusCapableOrHigher": false
+                },
+                "unknown_bits_hex": "0x00000000"
+              }
+            }
+          },
+          "port_connector_properties": {
+            "ioctl": "IOCTL_USB_GET_PORT_CONNECTOR_PROPERTIES",
+            "code": "0x00220458",
+            "ok": true,
+            "input_length": 18,
+            "input_hex_head": "08 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00",
+            "output_buffer_size": 18,
+            "bytes_returned": 18,
+            "raw_hex": "08 00 00 00 12 00 00 00 01 00 00 00 00 00 00 00",
+            "raw_hex_note": "先頭 16 バイトのみ（以降は UTF-16 文字列。サニタイズのため decoded 側に記録）",
+            "decoded": {
+              "ConnectionIndex": 8,
+              "ActualLength": 18,
+              "UsbPortProperties": {
+                "value": 1,
+                "hex": "0x00000001",
+                "binary": "00000000000000000000000000000001",
+                "bits": {
+                  "PortIsUserConnectable": true,
+                  "PortIsDebugCapable": false,
+                  "PortHasMultipleCompanions": false,
+                  "PortConnectorIsTypeC": false
+                },
+                "unknown_bits_hex": "0x00000000"
+              },
+              "CompanionIndex": 0,
+              "CompanionPortNumber": 0,
+              "CompanionHubSymbolicLinkName": ""
+            }
+          },
+          "device": null
+        },
+        {
+          "port": 9,
+          "connection_information_ex": {
+            "ioctl": "IOCTL_USB_GET_NODE_CONNECTION_INFORMATION_EX",
+            "code": "0x00220448",
+            "ok": true,
+            "input_length": 387,
+            "input_hex_head": "09 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00",
+            "output_buffer_size": 387,
+            "bytes_returned": 35,
+            "raw_hex": "00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00",
+            "decoded": {
+              "ConnectionIndex": 0,
+              "DeviceDescriptor": {
+                "bLength": 0,
+                "bDescriptorType": 0,
+                "bcdUSB": 0,
+                "bDeviceClass": 0,
+                "bDeviceSubClass": 0,
+                "bDeviceProtocol": 0,
+                "bMaxPacketSize0": 0,
+                "idVendor": 0,
+                "idProduct": 0,
+                "bcdDevice": 0,
+                "iManufacturer": 0,
+                "iProduct": 0,
+                "iSerialNumber": "REDACTED",
+                "bNumConfigurations": 0,
+                "bcdUSB_hex": "0x0000",
+                "idVendor_hex": "0x0000",
+                "idProduct_hex": "0x0000"
+              },
+              "CurrentConfigurationValue": 0,
+              "Speed": 0,
+              "Speed_name": "UsbLowSpeed",
+              "DeviceIsHub": false,
+              "DeviceAddress": 0,
+              "NumberOfOpenPipes": 0,
+              "ConnectionStatus": 0,
+              "ConnectionStatus_name": "NoDeviceConnected",
+              "PipeList": []
+            }
+          },
+          "connection_information_ex_v2": {
+            "ioctl": "IOCTL_USB_GET_NODE_CONNECTION_INFORMATION_EX_V2",
+            "code": "0x0022045C",
+            "ok": true,
+            "input_length": 16,
+            "input_hex_head": "09 00 00 00 10 00 00 00 04 00 00 00 00 00 00 00",
+            "output_buffer_size": 16,
+            "bytes_returned": 16,
+            "raw_hex": "09 00 00 00 10 00 00 00 03 00 00 00 00 00 00 00",
+            "decoded": {
+              "ConnectionIndex": 9,
+              "Length": 16,
+              "SupportedUsbProtocols": {
+                "value": 3,
+                "hex": "0x00000003",
+                "binary": "00000000000000000000000000000011",
+                "bits": {
+                  "Usb110": true,
+                  "Usb200": true,
+                  "Usb300": false
+                },
+                "unknown_bits_hex": "0x00000000"
+              },
+              "Flags": {
+                "value": 0,
+                "hex": "0x00000000",
+                "binary": "00000000000000000000000000000000",
+                "bits": {
+                  "DeviceIsOperatingAtSuperSpeedOrHigher": false,
+                  "DeviceIsSuperSpeedCapableOrHigher": false,
+                  "DeviceIsOperatingAtSuperSpeedPlusOrHigher": false,
+                  "DeviceIsSuperSpeedPlusCapableOrHigher": false
+                },
+                "unknown_bits_hex": "0x00000000"
+              }
+            }
+          },
+          "port_connector_properties": {
+            "ioctl": "IOCTL_USB_GET_PORT_CONNECTOR_PROPERTIES",
+            "code": "0x00220458",
+            "ok": true,
+            "input_length": 18,
+            "input_hex_head": "09 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00",
+            "output_buffer_size": 18,
+            "bytes_returned": 18,
+            "raw_hex": "09 00 00 00 12 00 00 00 00 00 00 00 00 00 00 00",
+            "raw_hex_note": "先頭 16 バイトのみ（以降は UTF-16 文字列。サニタイズのため decoded 側に記録）",
+            "decoded": {
+              "ConnectionIndex": 9,
+              "ActualLength": 18,
+              "UsbPortProperties": {
+                "value": 0,
+                "hex": "0x00000000",
+                "binary": "00000000000000000000000000000000",
+                "bits": {
+                  "PortIsUserConnectable": false,
+                  "PortIsDebugCapable": false,
+                  "PortHasMultipleCompanions": false,
+                  "PortConnectorIsTypeC": false
+                },
+                "unknown_bits_hex": "0x00000000"
+              },
+              "CompanionIndex": 0,
+              "CompanionPortNumber": 0,
+              "CompanionHubSymbolicLinkName": ""
+            }
+          },
+          "device": null
+        },
+        {
+          "port": 10,
+          "connection_information_ex": {
+            "ioctl": "IOCTL_USB_GET_NODE_CONNECTION_INFORMATION_EX",
+            "code": "0x00220448",
+            "ok": true,
+            "input_length": 387,
+            "input_hex_head": "0a 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00",
+            "output_buffer_size": 387,
+            "bytes_returned": 35,
+            "raw_hex": "00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00",
+            "decoded": {
+              "ConnectionIndex": 0,
+              "DeviceDescriptor": {
+                "bLength": 0,
+                "bDescriptorType": 0,
+                "bcdUSB": 0,
+                "bDeviceClass": 0,
+                "bDeviceSubClass": 0,
+                "bDeviceProtocol": 0,
+                "bMaxPacketSize0": 0,
+                "idVendor": 0,
+                "idProduct": 0,
+                "bcdDevice": 0,
+                "iManufacturer": 0,
+                "iProduct": 0,
+                "iSerialNumber": "REDACTED",
+                "bNumConfigurations": 0,
+                "bcdUSB_hex": "0x0000",
+                "idVendor_hex": "0x0000",
+                "idProduct_hex": "0x0000"
+              },
+              "CurrentConfigurationValue": 0,
+              "Speed": 0,
+              "Speed_name": "UsbLowSpeed",
+              "DeviceIsHub": false,
+              "DeviceAddress": 0,
+              "NumberOfOpenPipes": 0,
+              "ConnectionStatus": 0,
+              "ConnectionStatus_name": "NoDeviceConnected",
+              "PipeList": []
+            }
+          },
+          "connection_information_ex_v2": {
+            "ioctl": "IOCTL_USB_GET_NODE_CONNECTION_INFORMATION_EX_V2",
+            "code": "0x0022045C",
+            "ok": true,
+            "input_length": 16,
+            "input_hex_head": "0a 00 00 00 10 00 00 00 04 00 00 00 00 00 00 00",
+            "output_buffer_size": 16,
+            "bytes_returned": 16,
+            "raw_hex": "0a 00 00 00 10 00 00 00 03 00 00 00 00 00 00 00",
+            "decoded": {
+              "ConnectionIndex": 10,
+              "Length": 16,
+              "SupportedUsbProtocols": {
+                "value": 3,
+                "hex": "0x00000003",
+                "binary": "00000000000000000000000000000011",
+                "bits": {
+                  "Usb110": true,
+                  "Usb200": true,
+                  "Usb300": false
+                },
+                "unknown_bits_hex": "0x00000000"
+              },
+              "Flags": {
+                "value": 0,
+                "hex": "0x00000000",
+                "binary": "00000000000000000000000000000000",
+                "bits": {
+                  "DeviceIsOperatingAtSuperSpeedOrHigher": false,
+                  "DeviceIsSuperSpeedCapableOrHigher": false,
+                  "DeviceIsOperatingAtSuperSpeedPlusOrHigher": false,
+                  "DeviceIsSuperSpeedPlusCapableOrHigher": false
+                },
+                "unknown_bits_hex": "0x00000000"
+              }
+            }
+          },
+          "port_connector_properties": {
+            "ioctl": "IOCTL_USB_GET_PORT_CONNECTOR_PROPERTIES",
+            "code": "0x00220458",
+            "ok": true,
+            "input_length": 18,
+            "input_hex_head": "0a 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00",
+            "output_buffer_size": 18,
+            "bytes_returned": 18,
+            "raw_hex": "0a 00 00 00 12 00 00 00 00 00 00 00 00 00 00 00",
+            "raw_hex_note": "先頭 16 バイトのみ（以降は UTF-16 文字列。サニタイズのため decoded 側に記録）",
+            "decoded": {
+              "ConnectionIndex": 10,
+              "ActualLength": 18,
+              "UsbPortProperties": {
+                "value": 0,
+                "hex": "0x00000000",
+                "binary": "00000000000000000000000000000000",
+                "bits": {
+                  "PortIsUserConnectable": false,
+                  "PortIsDebugCapable": false,
+                  "PortHasMultipleCompanions": false,
+                  "PortConnectorIsTypeC": false
+                },
+                "unknown_bits_hex": "0x00000000"
+              },
+              "CompanionIndex": 0,
+              "CompanionPortNumber": 0,
+              "CompanionHubSymbolicLinkName": ""
+            }
+          },
+          "device": null
+        },
+        {
+          "port": 11,
+          "connection_information_ex": {
+            "ioctl": "IOCTL_USB_GET_NODE_CONNECTION_INFORMATION_EX",
+            "code": "0x00220448",
+            "ok": true,
+            "input_length": 387,
+            "input_hex_head": "0b 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00",
+            "output_buffer_size": 387,
+            "bytes_returned": 57,
+            "raw_hex": "0b 00 00 00 12 01 10 02 00 00 00 40 6d 34 78 56 20 03 01 02 03 01 01 02 00 0e 00 02 00 00 00 01 00 00 00 07 05 01 02 00 02 00 00 00 00 00 07 05 81 02 00 02 00 00 00 00 00",
+            "decoded": {
+              "ConnectionIndex": 11,
+              "DeviceDescriptor": {
+                "bLength": 18,
+                "bDescriptorType": 1,
+                "bcdUSB": 528,
+                "bDeviceClass": 0,
+                "bDeviceSubClass": 0,
+                "bDeviceProtocol": 0,
+                "bMaxPacketSize0": 64,
+                "idVendor": 13421,
+                "idProduct": 22136,
+                "bcdDevice": 800,
+                "iManufacturer": 1,
+                "iProduct": 2,
+                "iSerialNumber": "REDACTED",
+                "bNumConfigurations": 1,
+                "bcdUSB_hex": "0x0210",
+                "idVendor_hex": "0x346D",
+                "idProduct_hex": "0x5678"
+              },
+              "CurrentConfigurationValue": 1,
+              "Speed": 2,
+              "Speed_name": "UsbHighSpeed",
+              "DeviceIsHub": false,
+              "DeviceAddress": 14,
+              "NumberOfOpenPipes": 2,
+              "ConnectionStatus": 1,
+              "ConnectionStatus_name": "DeviceConnected",
+              "PipeList": [
+                {
+                  "bEndpointAddress": 1,
+                  "bmAttributes": 2,
+                  "wMaxPacketSize": 512,
+                  "bInterval": 0,
+                  "ScheduleOffset": 0
+                },
+                {
+                  "bEndpointAddress": 129,
+                  "bmAttributes": 2,
+                  "wMaxPacketSize": 512,
+                  "bInterval": 0,
+                  "ScheduleOffset": 0
+                }
+              ]
+            }
+          },
+          "connection_information_ex_v2": {
+            "ioctl": "IOCTL_USB_GET_NODE_CONNECTION_INFORMATION_EX_V2",
+            "code": "0x0022045C",
+            "ok": true,
+            "input_length": 16,
+            "input_hex_head": "0b 00 00 00 10 00 00 00 04 00 00 00 00 00 00 00",
+            "output_buffer_size": 16,
+            "bytes_returned": 16,
+            "raw_hex": "0b 00 00 00 10 00 00 00 03 00 00 00 02 00 00 00",
+            "decoded": {
+              "ConnectionIndex": 11,
+              "Length": 16,
+              "SupportedUsbProtocols": {
+                "value": 3,
+                "hex": "0x00000003",
+                "binary": "00000000000000000000000000000011",
+                "bits": {
+                  "Usb110": true,
+                  "Usb200": true,
+                  "Usb300": false
+                },
+                "unknown_bits_hex": "0x00000000"
+              },
+              "Flags": {
+                "value": 2,
+                "hex": "0x00000002",
+                "binary": "00000000000000000000000000000010",
+                "bits": {
+                  "DeviceIsOperatingAtSuperSpeedOrHigher": false,
+                  "DeviceIsSuperSpeedCapableOrHigher": true,
+                  "DeviceIsOperatingAtSuperSpeedPlusOrHigher": false,
+                  "DeviceIsSuperSpeedPlusCapableOrHigher": false
+                },
+                "unknown_bits_hex": "0x00000000"
+              }
+            }
+          },
+          "port_connector_properties": {
+            "ioctl": "IOCTL_USB_GET_PORT_CONNECTOR_PROPERTIES",
+            "code": "0x00220458",
+            "ok": true,
+            "input_length": 154,
+            "input_hex_head": "0b 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00",
+            "output_buffer_size": 154,
+            "bytes_returned": 154,
+            "raw_hex": "0b 00 00 00 9a 00 00 00 01 00 00 00 00 00 17 00",
+            "raw_hex_note": "先頭 16 バイトのみ（以降は UTF-16 文字列。サニタイズのため decoded 側に記録）",
+            "decoded": {
+              "ConnectionIndex": 11,
+              "ActualLength": 154,
+              "UsbPortProperties": {
+                "value": 1,
+                "hex": "0x00000001",
+                "binary": "00000000000000000000000000000001",
+                "bits": {
+                  "PortIsUserConnectable": true,
+                  "PortIsDebugCapable": false,
+                  "PortHasMultipleCompanions": false,
+                  "PortConnectorIsTypeC": false
+                },
+                "unknown_bits_hex": "0x00000000"
+              },
+              "CompanionIndex": 0,
+              "CompanionPortNumber": 23,
+              "CompanionHubSymbolicLinkName": "USB#ROOT_HUB30#4&1feef4ee&0&0#{f18a0e88-c30c-11d0-8815-00a0c906bed8}"
+            }
+          },
+          "device": {
+            "instance_id": "USB\\VID_346D&PID_5678\\REDACTED",
+            "parent_instance_id": "USB\\ROOT_HUB30\\4&1FEEF4EE&0&0",
+            "description": "USB 大容量記憶装置",
+            "friendly_name": null,
+            "bus_reported_description": "USB Device",
+            "driver_key": "{36fc9e60-c465-11cf-8056-444553540000}\\0002",
+            "service": "USBSTOR",
+            "location_information": "Port_#0011.Hub_#0001",
+            "location_paths": [
+              "PCIROOT(0)#PCI(1400)#USBROOT(0)#USB(11)",
+              "ACPI(_SB_)#ACPI(PCI0)#ACPI(XHC_)#ACPI(RHUB)#ACPI(HS11)"
+            ]
+          },
+          "driver_key_name": {
+            "ioctl": "IOCTL_USB_GET_NODE_CONNECTION_DRIVERKEY_NAME",
+            "code": "0x00220420",
+            "ok": true,
+            "input_length": 98,
+            "input_hex_head": "0b 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00",
+            "output_buffer_size": 98,
+            "bytes_returned": 98,
+            "raw_hex": "0b 00 00 00 62 00 00 00",
+            "raw_hex_note": "先頭 8 バイトのみ（以降は UTF-16 文字列。サニタイズのため decoded 側に記録）",
+            "decoded": {
+              "ConnectionIndex": 11,
+              "ActualLength": 98,
+              "Name": "{36fc9e60-c465-11cf-8056-444553540000}\\0002"
+            }
+          }
+        },
+        {
+          "port": 12,
+          "connection_information_ex": {
+            "ioctl": "IOCTL_USB_GET_NODE_CONNECTION_INFORMATION_EX",
+            "code": "0x00220448",
+            "ok": true,
+            "input_length": 387,
+            "input_hex_head": "0c 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00",
+            "output_buffer_size": 387,
+            "bytes_returned": 46,
+            "raw_hex": "0c 00 00 00 12 01 00 02 00 00 00 08 f2 04 00 04 03 01 01 02 00 01 01 00 00 06 00 01 00 00 00 01 00 00 00 07 05 81 03 08 00 0a 00 00 00 00",
+            "decoded": {
+              "ConnectionIndex": 12,
+              "DeviceDescriptor": {
+                "bLength": 18,
+                "bDescriptorType": 1,
+                "bcdUSB": 512,
+                "bDeviceClass": 0,
+                "bDeviceSubClass": 0,
+                "bDeviceProtocol": 0,
+                "bMaxPacketSize0": 8,
+                "idVendor": 1266,
+                "idProduct": 1024,
+                "bcdDevice": 259,
+                "iManufacturer": 1,
+                "iProduct": 2,
+                "iSerialNumber": "REDACTED",
+                "bNumConfigurations": 1,
+                "bcdUSB_hex": "0x0200",
+                "idVendor_hex": "0x04F2",
+                "idProduct_hex": "0x0400"
+              },
+              "CurrentConfigurationValue": 1,
+              "Speed": 0,
+              "Speed_name": "UsbLowSpeed",
+              "DeviceIsHub": false,
+              "DeviceAddress": 6,
+              "NumberOfOpenPipes": 1,
+              "ConnectionStatus": 1,
+              "ConnectionStatus_name": "DeviceConnected",
+              "PipeList": [
+                {
+                  "bEndpointAddress": 129,
+                  "bmAttributes": 3,
+                  "wMaxPacketSize": 8,
+                  "bInterval": 10,
+                  "ScheduleOffset": 0
+                }
+              ]
+            }
+          },
+          "connection_information_ex_v2": {
+            "ioctl": "IOCTL_USB_GET_NODE_CONNECTION_INFORMATION_EX_V2",
+            "code": "0x0022045C",
+            "ok": true,
+            "input_length": 16,
+            "input_hex_head": "0c 00 00 00 10 00 00 00 04 00 00 00 00 00 00 00",
+            "output_buffer_size": 16,
+            "bytes_returned": 16,
+            "raw_hex": "0c 00 00 00 10 00 00 00 03 00 00 00 00 00 00 00",
+            "decoded": {
+              "ConnectionIndex": 12,
+              "Length": 16,
+              "SupportedUsbProtocols": {
+                "value": 3,
+                "hex": "0x00000003",
+                "binary": "00000000000000000000000000000011",
+                "bits": {
+                  "Usb110": true,
+                  "Usb200": true,
+                  "Usb300": false
+                },
+                "unknown_bits_hex": "0x00000000"
+              },
+              "Flags": {
+                "value": 0,
+                "hex": "0x00000000",
+                "binary": "00000000000000000000000000000000",
+                "bits": {
+                  "DeviceIsOperatingAtSuperSpeedOrHigher": false,
+                  "DeviceIsSuperSpeedCapableOrHigher": false,
+                  "DeviceIsOperatingAtSuperSpeedPlusOrHigher": false,
+                  "DeviceIsSuperSpeedPlusCapableOrHigher": false
+                },
+                "unknown_bits_hex": "0x00000000"
+              }
+            }
+          },
+          "port_connector_properties": {
+            "ioctl": "IOCTL_USB_GET_PORT_CONNECTOR_PROPERTIES",
+            "code": "0x00220458",
+            "ok": true,
+            "input_length": 154,
+            "input_hex_head": "0c 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00",
+            "output_buffer_size": 154,
+            "bytes_returned": 154,
+            "raw_hex": "0c 00 00 00 9a 00 00 00 01 00 00 00 00 00 16 00",
+            "raw_hex_note": "先頭 16 バイトのみ（以降は UTF-16 文字列。サニタイズのため decoded 側に記録）",
+            "decoded": {
+              "ConnectionIndex": 12,
+              "ActualLength": 154,
+              "UsbPortProperties": {
+                "value": 1,
+                "hex": "0x00000001",
+                "binary": "00000000000000000000000000000001",
+                "bits": {
+                  "PortIsUserConnectable": true,
+                  "PortIsDebugCapable": false,
+                  "PortHasMultipleCompanions": false,
+                  "PortConnectorIsTypeC": false
+                },
+                "unknown_bits_hex": "0x00000000"
+              },
+              "CompanionIndex": 0,
+              "CompanionPortNumber": 22,
+              "CompanionHubSymbolicLinkName": "USB#ROOT_HUB30#4&1feef4ee&0&0#{f18a0e88-c30c-11d0-8815-00a0c906bed8}"
+            }
+          },
+          "device": {
+            "instance_id": "USB\\VID_04F2&PID_0400\\REDACTED",
+            "parent_instance_id": "USB\\ROOT_HUB30\\4&1FEEF4EE&0&0",
+            "description": "USB 入力デバイス",
+            "friendly_name": null,
+            "bus_reported_description": "USB Keyboard",
+            "driver_key": "{745a17a0-74d3-11d0-b6fe-00a0c90f57da}\\0026",
+            "service": "HidUsb",
+            "location_information": "Port_#0012.Hub_#0001",
+            "location_paths": [
+              "PCIROOT(0)#PCI(1400)#USBROOT(0)#USB(12)",
+              "ACPI(_SB_)#ACPI(PCI0)#ACPI(XHC_)#ACPI(RHUB)#ACPI(HS12)"
+            ]
+          },
+          "driver_key_name": {
+            "ioctl": "IOCTL_USB_GET_NODE_CONNECTION_DRIVERKEY_NAME",
+            "code": "0x00220420",
+            "ok": true,
+            "input_length": 98,
+            "input_hex_head": "0c 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00",
+            "output_buffer_size": 98,
+            "bytes_returned": 98,
+            "raw_hex": "0c 00 00 00 62 00 00 00",
+            "raw_hex_note": "先頭 8 バイトのみ（以降は UTF-16 文字列。サニタイズのため decoded 側に記録）",
+            "decoded": {
+              "ConnectionIndex": 12,
+              "ActualLength": 98,
+              "Name": "{745a17a0-74d3-11d0-b6fe-00a0c90f57da}\\0026"
+            }
+          }
+        },
+        {
+          "port": 13,
+          "connection_information_ex": {
+            "ioctl": "IOCTL_USB_GET_NODE_CONNECTION_INFORMATION_EX",
+            "code": "0x00220448",
+            "ok": true,
+            "input_length": 387,
+            "input_hex_head": "0d 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00",
+            "output_buffer_size": 387,
+            "bytes_returned": 35,
+            "raw_hex": "00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00",
+            "decoded": {
+              "ConnectionIndex": 0,
+              "DeviceDescriptor": {
+                "bLength": 0,
+                "bDescriptorType": 0,
+                "bcdUSB": 0,
+                "bDeviceClass": 0,
+                "bDeviceSubClass": 0,
+                "bDeviceProtocol": 0,
+                "bMaxPacketSize0": 0,
+                "idVendor": 0,
+                "idProduct": 0,
+                "bcdDevice": 0,
+                "iManufacturer": 0,
+                "iProduct": 0,
+                "iSerialNumber": "REDACTED",
+                "bNumConfigurations": 0,
+                "bcdUSB_hex": "0x0000",
+                "idVendor_hex": "0x0000",
+                "idProduct_hex": "0x0000"
+              },
+              "CurrentConfigurationValue": 0,
+              "Speed": 0,
+              "Speed_name": "UsbLowSpeed",
+              "DeviceIsHub": false,
+              "DeviceAddress": 0,
+              "NumberOfOpenPipes": 0,
+              "ConnectionStatus": 0,
+              "ConnectionStatus_name": "NoDeviceConnected",
+              "PipeList": []
+            }
+          },
+          "connection_information_ex_v2": {
+            "ioctl": "IOCTL_USB_GET_NODE_CONNECTION_INFORMATION_EX_V2",
+            "code": "0x0022045C",
+            "ok": true,
+            "input_length": 16,
+            "input_hex_head": "0d 00 00 00 10 00 00 00 04 00 00 00 00 00 00 00",
+            "output_buffer_size": 16,
+            "bytes_returned": 16,
+            "raw_hex": "0d 00 00 00 10 00 00 00 03 00 00 00 00 00 00 00",
+            "decoded": {
+              "ConnectionIndex": 13,
+              "Length": 16,
+              "SupportedUsbProtocols": {
+                "value": 3,
+                "hex": "0x00000003",
+                "binary": "00000000000000000000000000000011",
+                "bits": {
+                  "Usb110": true,
+                  "Usb200": true,
+                  "Usb300": false
+                },
+                "unknown_bits_hex": "0x00000000"
+              },
+              "Flags": {
+                "value": 0,
+                "hex": "0x00000000",
+                "binary": "00000000000000000000000000000000",
+                "bits": {
+                  "DeviceIsOperatingAtSuperSpeedOrHigher": false,
+                  "DeviceIsSuperSpeedCapableOrHigher": false,
+                  "DeviceIsOperatingAtSuperSpeedPlusOrHigher": false,
+                  "DeviceIsSuperSpeedPlusCapableOrHigher": false
+                },
+                "unknown_bits_hex": "0x00000000"
+              }
+            }
+          },
+          "port_connector_properties": {
+            "ioctl": "IOCTL_USB_GET_PORT_CONNECTOR_PROPERTIES",
+            "code": "0x00220458",
+            "ok": true,
+            "input_length": 18,
+            "input_hex_head": "0d 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00",
+            "output_buffer_size": 18,
+            "bytes_returned": 18,
+            "raw_hex": "0d 00 00 00 12 00 00 00 00 00 00 00 00 00 00 00",
+            "raw_hex_note": "先頭 16 バイトのみ（以降は UTF-16 文字列。サニタイズのため decoded 側に記録）",
+            "decoded": {
+              "ConnectionIndex": 13,
+              "ActualLength": 18,
+              "UsbPortProperties": {
+                "value": 0,
+                "hex": "0x00000000",
+                "binary": "00000000000000000000000000000000",
+                "bits": {
+                  "PortIsUserConnectable": false,
+                  "PortIsDebugCapable": false,
+                  "PortHasMultipleCompanions": false,
+                  "PortConnectorIsTypeC": false
+                },
+                "unknown_bits_hex": "0x00000000"
+              },
+              "CompanionIndex": 0,
+              "CompanionPortNumber": 0,
+              "CompanionHubSymbolicLinkName": ""
+            }
+          },
+          "device": null
+        },
+        {
+          "port": 14,
+          "connection_information_ex": {
+            "ioctl": "IOCTL_USB_GET_NODE_CONNECTION_INFORMATION_EX",
+            "code": "0x00220448",
+            "ok": true,
+            "input_length": 387,
+            "input_hex_head": "0e 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00",
+            "output_buffer_size": 387,
+            "bytes_returned": 35,
+            "raw_hex": "00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00",
+            "decoded": {
+              "ConnectionIndex": 0,
+              "DeviceDescriptor": {
+                "bLength": 0,
+                "bDescriptorType": 0,
+                "bcdUSB": 0,
+                "bDeviceClass": 0,
+                "bDeviceSubClass": 0,
+                "bDeviceProtocol": 0,
+                "bMaxPacketSize0": 0,
+                "idVendor": 0,
+                "idProduct": 0,
+                "bcdDevice": 0,
+                "iManufacturer": 0,
+                "iProduct": 0,
+                "iSerialNumber": "REDACTED",
+                "bNumConfigurations": 0,
+                "bcdUSB_hex": "0x0000",
+                "idVendor_hex": "0x0000",
+                "idProduct_hex": "0x0000"
+              },
+              "CurrentConfigurationValue": 0,
+              "Speed": 0,
+              "Speed_name": "UsbLowSpeed",
+              "DeviceIsHub": false,
+              "DeviceAddress": 0,
+              "NumberOfOpenPipes": 0,
+              "ConnectionStatus": 0,
+              "ConnectionStatus_name": "NoDeviceConnected",
+              "PipeList": []
+            }
+          },
+          "connection_information_ex_v2": {
+            "ioctl": "IOCTL_USB_GET_NODE_CONNECTION_INFORMATION_EX_V2",
+            "code": "0x0022045C",
+            "ok": true,
+            "input_length": 16,
+            "input_hex_head": "0e 00 00 00 10 00 00 00 04 00 00 00 00 00 00 00",
+            "output_buffer_size": 16,
+            "bytes_returned": 16,
+            "raw_hex": "0e 00 00 00 10 00 00 00 03 00 00 00 00 00 00 00",
+            "decoded": {
+              "ConnectionIndex": 14,
+              "Length": 16,
+              "SupportedUsbProtocols": {
+                "value": 3,
+                "hex": "0x00000003",
+                "binary": "00000000000000000000000000000011",
+                "bits": {
+                  "Usb110": true,
+                  "Usb200": true,
+                  "Usb300": false
+                },
+                "unknown_bits_hex": "0x00000000"
+              },
+              "Flags": {
+                "value": 0,
+                "hex": "0x00000000",
+                "binary": "00000000000000000000000000000000",
+                "bits": {
+                  "DeviceIsOperatingAtSuperSpeedOrHigher": false,
+                  "DeviceIsSuperSpeedCapableOrHigher": false,
+                  "DeviceIsOperatingAtSuperSpeedPlusOrHigher": false,
+                  "DeviceIsSuperSpeedPlusCapableOrHigher": false
+                },
+                "unknown_bits_hex": "0x00000000"
+              }
+            }
+          },
+          "port_connector_properties": {
+            "ioctl": "IOCTL_USB_GET_PORT_CONNECTOR_PROPERTIES",
+            "code": "0x00220458",
+            "ok": true,
+            "input_length": 18,
+            "input_hex_head": "0e 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00",
+            "output_buffer_size": 18,
+            "bytes_returned": 18,
+            "raw_hex": "0e 00 00 00 12 00 00 00 00 00 00 00 00 00 00 00",
+            "raw_hex_note": "先頭 16 バイトのみ（以降は UTF-16 文字列。サニタイズのため decoded 側に記録）",
+            "decoded": {
+              "ConnectionIndex": 14,
+              "ActualLength": 18,
+              "UsbPortProperties": {
+                "value": 0,
+                "hex": "0x00000000",
+                "binary": "00000000000000000000000000000000",
+                "bits": {
+                  "PortIsUserConnectable": false,
+                  "PortIsDebugCapable": false,
+                  "PortHasMultipleCompanions": false,
+                  "PortConnectorIsTypeC": false
+                },
+                "unknown_bits_hex": "0x00000000"
+              },
+              "CompanionIndex": 0,
+              "CompanionPortNumber": 0,
+              "CompanionHubSymbolicLinkName": ""
+            }
+          },
+          "device": null
+        },
+        {
+          "port": 15,
+          "connection_information_ex": {
+            "ioctl": "IOCTL_USB_GET_NODE_CONNECTION_INFORMATION_EX",
+            "code": "0x00220448",
+            "ok": true,
+            "input_length": 387,
+            "input_hex_head": "0f 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00",
+            "output_buffer_size": 387,
+            "bytes_returned": 35,
+            "raw_hex": "00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00",
+            "decoded": {
+              "ConnectionIndex": 0,
+              "DeviceDescriptor": {
+                "bLength": 0,
+                "bDescriptorType": 0,
+                "bcdUSB": 0,
+                "bDeviceClass": 0,
+                "bDeviceSubClass": 0,
+                "bDeviceProtocol": 0,
+                "bMaxPacketSize0": 0,
+                "idVendor": 0,
+                "idProduct": 0,
+                "bcdDevice": 0,
+                "iManufacturer": 0,
+                "iProduct": 0,
+                "iSerialNumber": "REDACTED",
+                "bNumConfigurations": 0,
+                "bcdUSB_hex": "0x0000",
+                "idVendor_hex": "0x0000",
+                "idProduct_hex": "0x0000"
+              },
+              "CurrentConfigurationValue": 0,
+              "Speed": 0,
+              "Speed_name": "UsbLowSpeed",
+              "DeviceIsHub": false,
+              "DeviceAddress": 0,
+              "NumberOfOpenPipes": 0,
+              "ConnectionStatus": 0,
+              "ConnectionStatus_name": "NoDeviceConnected",
+              "PipeList": []
+            }
+          },
+          "connection_information_ex_v2": {
+            "ioctl": "IOCTL_USB_GET_NODE_CONNECTION_INFORMATION_EX_V2",
+            "code": "0x0022045C",
+            "ok": true,
+            "input_length": 16,
+            "input_hex_head": "0f 00 00 00 10 00 00 00 04 00 00 00 00 00 00 00",
+            "output_buffer_size": 16,
+            "bytes_returned": 16,
+            "raw_hex": "0f 00 00 00 10 00 00 00 03 00 00 00 00 00 00 00",
+            "decoded": {
+              "ConnectionIndex": 15,
+              "Length": 16,
+              "SupportedUsbProtocols": {
+                "value": 3,
+                "hex": "0x00000003",
+                "binary": "00000000000000000000000000000011",
+                "bits": {
+                  "Usb110": true,
+                  "Usb200": true,
+                  "Usb300": false
+                },
+                "unknown_bits_hex": "0x00000000"
+              },
+              "Flags": {
+                "value": 0,
+                "hex": "0x00000000",
+                "binary": "00000000000000000000000000000000",
+                "bits": {
+                  "DeviceIsOperatingAtSuperSpeedOrHigher": false,
+                  "DeviceIsSuperSpeedCapableOrHigher": false,
+                  "DeviceIsOperatingAtSuperSpeedPlusOrHigher": false,
+                  "DeviceIsSuperSpeedPlusCapableOrHigher": false
+                },
+                "unknown_bits_hex": "0x00000000"
+              }
+            }
+          },
+          "port_connector_properties": {
+            "ioctl": "IOCTL_USB_GET_PORT_CONNECTOR_PROPERTIES",
+            "code": "0x00220458",
+            "ok": true,
+            "input_length": 18,
+            "input_hex_head": "0f 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00",
+            "output_buffer_size": 18,
+            "bytes_returned": 18,
+            "raw_hex": "0f 00 00 00 12 00 00 00 00 00 00 00 00 00 00 00",
+            "raw_hex_note": "先頭 16 バイトのみ（以降は UTF-16 文字列。サニタイズのため decoded 側に記録）",
+            "decoded": {
+              "ConnectionIndex": 15,
+              "ActualLength": 18,
+              "UsbPortProperties": {
+                "value": 0,
+                "hex": "0x00000000",
+                "binary": "00000000000000000000000000000000",
+                "bits": {
+                  "PortIsUserConnectable": false,
+                  "PortIsDebugCapable": false,
+                  "PortHasMultipleCompanions": false,
+                  "PortConnectorIsTypeC": false
+                },
+                "unknown_bits_hex": "0x00000000"
+              },
+              "CompanionIndex": 0,
+              "CompanionPortNumber": 0,
+              "CompanionHubSymbolicLinkName": ""
+            }
+          },
+          "device": null
+        },
+        {
+          "port": 16,
+          "connection_information_ex": {
+            "ioctl": "IOCTL_USB_GET_NODE_CONNECTION_INFORMATION_EX",
+            "code": "0x00220448",
+            "ok": true,
+            "input_length": 387,
+            "input_hex_head": "10 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00",
+            "output_buffer_size": 387,
+            "bytes_returned": 35,
+            "raw_hex": "00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00",
+            "decoded": {
+              "ConnectionIndex": 0,
+              "DeviceDescriptor": {
+                "bLength": 0,
+                "bDescriptorType": 0,
+                "bcdUSB": 0,
+                "bDeviceClass": 0,
+                "bDeviceSubClass": 0,
+                "bDeviceProtocol": 0,
+                "bMaxPacketSize0": 0,
+                "idVendor": 0,
+                "idProduct": 0,
+                "bcdDevice": 0,
+                "iManufacturer": 0,
+                "iProduct": 0,
+                "iSerialNumber": "REDACTED",
+                "bNumConfigurations": 0,
+                "bcdUSB_hex": "0x0000",
+                "idVendor_hex": "0x0000",
+                "idProduct_hex": "0x0000"
+              },
+              "CurrentConfigurationValue": 0,
+              "Speed": 0,
+              "Speed_name": "UsbLowSpeed",
+              "DeviceIsHub": false,
+              "DeviceAddress": 0,
+              "NumberOfOpenPipes": 0,
+              "ConnectionStatus": 0,
+              "ConnectionStatus_name": "NoDeviceConnected",
+              "PipeList": []
+            }
+          },
+          "connection_information_ex_v2": {
+            "ioctl": "IOCTL_USB_GET_NODE_CONNECTION_INFORMATION_EX_V2",
+            "code": "0x0022045C",
+            "ok": true,
+            "input_length": 16,
+            "input_hex_head": "10 00 00 00 10 00 00 00 04 00 00 00 00 00 00 00",
+            "output_buffer_size": 16,
+            "bytes_returned": 16,
+            "raw_hex": "10 00 00 00 10 00 00 00 03 00 00 00 00 00 00 00",
+            "decoded": {
+              "ConnectionIndex": 16,
+              "Length": 16,
+              "SupportedUsbProtocols": {
+                "value": 3,
+                "hex": "0x00000003",
+                "binary": "00000000000000000000000000000011",
+                "bits": {
+                  "Usb110": true,
+                  "Usb200": true,
+                  "Usb300": false
+                },
+                "unknown_bits_hex": "0x00000000"
+              },
+              "Flags": {
+                "value": 0,
+                "hex": "0x00000000",
+                "binary": "00000000000000000000000000000000",
+                "bits": {
+                  "DeviceIsOperatingAtSuperSpeedOrHigher": false,
+                  "DeviceIsSuperSpeedCapableOrHigher": false,
+                  "DeviceIsOperatingAtSuperSpeedPlusOrHigher": false,
+                  "DeviceIsSuperSpeedPlusCapableOrHigher": false
+                },
+                "unknown_bits_hex": "0x00000000"
+              }
+            }
+          },
+          "port_connector_properties": {
+            "ioctl": "IOCTL_USB_GET_PORT_CONNECTOR_PROPERTIES",
+            "code": "0x00220458",
+            "ok": true,
+            "input_length": 18,
+            "input_hex_head": "10 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00",
+            "output_buffer_size": 18,
+            "bytes_returned": 18,
+            "raw_hex": "10 00 00 00 12 00 00 00 00 00 00 00 00 00 00 00",
+            "raw_hex_note": "先頭 16 バイトのみ（以降は UTF-16 文字列。サニタイズのため decoded 側に記録）",
+            "decoded": {
+              "ConnectionIndex": 16,
+              "ActualLength": 18,
+              "UsbPortProperties": {
+                "value": 0,
+                "hex": "0x00000000",
+                "binary": "00000000000000000000000000000000",
+                "bits": {
+                  "PortIsUserConnectable": false,
+                  "PortIsDebugCapable": false,
+                  "PortHasMultipleCompanions": false,
+                  "PortConnectorIsTypeC": false
+                },
+                "unknown_bits_hex": "0x00000000"
+              },
+              "CompanionIndex": 0,
+              "CompanionPortNumber": 0,
+              "CompanionHubSymbolicLinkName": ""
+            }
+          },
+          "device": null
+        },
+        {
+          "port": 17,
+          "connection_information_ex": {
+            "ioctl": "IOCTL_USB_GET_NODE_CONNECTION_INFORMATION_EX",
+            "code": "0x00220448",
+            "ok": true,
+            "input_length": 387,
+            "input_hex_head": "11 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00",
+            "output_buffer_size": 387,
+            "bytes_returned": 35,
+            "raw_hex": "00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00",
+            "decoded": {
+              "ConnectionIndex": 0,
+              "DeviceDescriptor": {
+                "bLength": 0,
+                "bDescriptorType": 0,
+                "bcdUSB": 0,
+                "bDeviceClass": 0,
+                "bDeviceSubClass": 0,
+                "bDeviceProtocol": 0,
+                "bMaxPacketSize0": 0,
+                "idVendor": 0,
+                "idProduct": 0,
+                "bcdDevice": 0,
+                "iManufacturer": 0,
+                "iProduct": 0,
+                "iSerialNumber": "REDACTED",
+                "bNumConfigurations": 0,
+                "bcdUSB_hex": "0x0000",
+                "idVendor_hex": "0x0000",
+                "idProduct_hex": "0x0000"
+              },
+              "CurrentConfigurationValue": 0,
+              "Speed": 0,
+              "Speed_name": "UsbLowSpeed",
+              "DeviceIsHub": false,
+              "DeviceAddress": 0,
+              "NumberOfOpenPipes": 0,
+              "ConnectionStatus": 0,
+              "ConnectionStatus_name": "NoDeviceConnected",
+              "PipeList": []
+            }
+          },
+          "connection_information_ex_v2": {
+            "ioctl": "IOCTL_USB_GET_NODE_CONNECTION_INFORMATION_EX_V2",
+            "code": "0x0022045C",
+            "ok": true,
+            "input_length": 16,
+            "input_hex_head": "11 00 00 00 10 00 00 00 04 00 00 00 00 00 00 00",
+            "output_buffer_size": 16,
+            "bytes_returned": 16,
+            "raw_hex": "11 00 00 00 10 00 00 00 04 00 00 00 00 00 00 00",
+            "decoded": {
+              "ConnectionIndex": 17,
+              "Length": 16,
+              "SupportedUsbProtocols": {
+                "value": 4,
+                "hex": "0x00000004",
+                "binary": "00000000000000000000000000000100",
+                "bits": {
+                  "Usb110": false,
+                  "Usb200": false,
+                  "Usb300": true
+                },
+                "unknown_bits_hex": "0x00000000"
+              },
+              "Flags": {
+                "value": 0,
+                "hex": "0x00000000",
+                "binary": "00000000000000000000000000000000",
+                "bits": {
+                  "DeviceIsOperatingAtSuperSpeedOrHigher": false,
+                  "DeviceIsSuperSpeedCapableOrHigher": false,
+                  "DeviceIsOperatingAtSuperSpeedPlusOrHigher": false,
+                  "DeviceIsSuperSpeedPlusCapableOrHigher": false
+                },
+                "unknown_bits_hex": "0x00000000"
+              }
+            }
+          },
+          "port_connector_properties": {
+            "ioctl": "IOCTL_USB_GET_PORT_CONNECTOR_PROPERTIES",
+            "code": "0x00220458",
+            "ok": true,
+            "input_length": 18,
+            "input_hex_head": "11 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00",
+            "output_buffer_size": 18,
+            "bytes_returned": 18,
+            "raw_hex": "11 00 00 00 12 00 00 00 02 00 00 00 00 00 00 00",
+            "raw_hex_note": "先頭 16 バイトのみ（以降は UTF-16 文字列。サニタイズのため decoded 側に記録）",
+            "decoded": {
+              "ConnectionIndex": 17,
+              "ActualLength": 18,
+              "UsbPortProperties": {
+                "value": 2,
+                "hex": "0x00000002",
+                "binary": "00000000000000000000000000000010",
+                "bits": {
+                  "PortIsUserConnectable": false,
+                  "PortIsDebugCapable": true,
+                  "PortHasMultipleCompanions": false,
+                  "PortConnectorIsTypeC": false
+                },
+                "unknown_bits_hex": "0x00000000"
+              },
+              "CompanionIndex": 0,
+              "CompanionPortNumber": 0,
+              "CompanionHubSymbolicLinkName": ""
+            }
+          },
+          "device": null
+        },
+        {
+          "port": 18,
+          "connection_information_ex": {
+            "ioctl": "IOCTL_USB_GET_NODE_CONNECTION_INFORMATION_EX",
+            "code": "0x00220448",
+            "ok": true,
+            "input_length": 387,
+            "input_hex_head": "12 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00",
+            "output_buffer_size": 387,
+            "bytes_returned": 35,
+            "raw_hex": "00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00",
+            "decoded": {
+              "ConnectionIndex": 0,
+              "DeviceDescriptor": {
+                "bLength": 0,
+                "bDescriptorType": 0,
+                "bcdUSB": 0,
+                "bDeviceClass": 0,
+                "bDeviceSubClass": 0,
+                "bDeviceProtocol": 0,
+                "bMaxPacketSize0": 0,
+                "idVendor": 0,
+                "idProduct": 0,
+                "bcdDevice": 0,
+                "iManufacturer": 0,
+                "iProduct": 0,
+                "iSerialNumber": "REDACTED",
+                "bNumConfigurations": 0,
+                "bcdUSB_hex": "0x0000",
+                "idVendor_hex": "0x0000",
+                "idProduct_hex": "0x0000"
+              },
+              "CurrentConfigurationValue": 0,
+              "Speed": 0,
+              "Speed_name": "UsbLowSpeed",
+              "DeviceIsHub": false,
+              "DeviceAddress": 0,
+              "NumberOfOpenPipes": 0,
+              "ConnectionStatus": 0,
+              "ConnectionStatus_name": "NoDeviceConnected",
+              "PipeList": []
+            }
+          },
+          "connection_information_ex_v2": {
+            "ioctl": "IOCTL_USB_GET_NODE_CONNECTION_INFORMATION_EX_V2",
+            "code": "0x0022045C",
+            "ok": true,
+            "input_length": 16,
+            "input_hex_head": "12 00 00 00 10 00 00 00 04 00 00 00 00 00 00 00",
+            "output_buffer_size": 16,
+            "bytes_returned": 16,
+            "raw_hex": "12 00 00 00 10 00 00 00 04 00 00 00 00 00 00 00",
+            "decoded": {
+              "ConnectionIndex": 18,
+              "Length": 16,
+              "SupportedUsbProtocols": {
+                "value": 4,
+                "hex": "0x00000004",
+                "binary": "00000000000000000000000000000100",
+                "bits": {
+                  "Usb110": false,
+                  "Usb200": false,
+                  "Usb300": true
+                },
+                "unknown_bits_hex": "0x00000000"
+              },
+              "Flags": {
+                "value": 0,
+                "hex": "0x00000000",
+                "binary": "00000000000000000000000000000000",
+                "bits": {
+                  "DeviceIsOperatingAtSuperSpeedOrHigher": false,
+                  "DeviceIsSuperSpeedCapableOrHigher": false,
+                  "DeviceIsOperatingAtSuperSpeedPlusOrHigher": false,
+                  "DeviceIsSuperSpeedPlusCapableOrHigher": false
+                },
+                "unknown_bits_hex": "0x00000000"
+              }
+            }
+          },
+          "port_connector_properties": {
+            "ioctl": "IOCTL_USB_GET_PORT_CONNECTOR_PROPERTIES",
+            "code": "0x00220458",
+            "ok": true,
+            "input_length": 18,
+            "input_hex_head": "12 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00",
+            "output_buffer_size": 18,
+            "bytes_returned": 18,
+            "raw_hex": "12 00 00 00 12 00 00 00 02 00 00 00 00 00 00 00",
+            "raw_hex_note": "先頭 16 バイトのみ（以降は UTF-16 文字列。サニタイズのため decoded 側に記録）",
+            "decoded": {
+              "ConnectionIndex": 18,
+              "ActualLength": 18,
+              "UsbPortProperties": {
+                "value": 2,
+                "hex": "0x00000002",
+                "binary": "00000000000000000000000000000010",
+                "bits": {
+                  "PortIsUserConnectable": false,
+                  "PortIsDebugCapable": true,
+                  "PortHasMultipleCompanions": false,
+                  "PortConnectorIsTypeC": false
+                },
+                "unknown_bits_hex": "0x00000000"
+              },
+              "CompanionIndex": 0,
+              "CompanionPortNumber": 0,
+              "CompanionHubSymbolicLinkName": ""
+            }
+          },
+          "device": null
+        },
+        {
+          "port": 19,
+          "connection_information_ex": {
+            "ioctl": "IOCTL_USB_GET_NODE_CONNECTION_INFORMATION_EX",
+            "code": "0x00220448",
+            "ok": true,
+            "input_length": 387,
+            "input_hex_head": "13 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00",
+            "output_buffer_size": 387,
+            "bytes_returned": 35,
+            "raw_hex": "00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00",
+            "decoded": {
+              "ConnectionIndex": 0,
+              "DeviceDescriptor": {
+                "bLength": 0,
+                "bDescriptorType": 0,
+                "bcdUSB": 0,
+                "bDeviceClass": 0,
+                "bDeviceSubClass": 0,
+                "bDeviceProtocol": 0,
+                "bMaxPacketSize0": 0,
+                "idVendor": 0,
+                "idProduct": 0,
+                "bcdDevice": 0,
+                "iManufacturer": 0,
+                "iProduct": 0,
+                "iSerialNumber": "REDACTED",
+                "bNumConfigurations": 0,
+                "bcdUSB_hex": "0x0000",
+                "idVendor_hex": "0x0000",
+                "idProduct_hex": "0x0000"
+              },
+              "CurrentConfigurationValue": 0,
+              "Speed": 0,
+              "Speed_name": "UsbLowSpeed",
+              "DeviceIsHub": false,
+              "DeviceAddress": 0,
+              "NumberOfOpenPipes": 0,
+              "ConnectionStatus": 0,
+              "ConnectionStatus_name": "NoDeviceConnected",
+              "PipeList": []
+            }
+          },
+          "connection_information_ex_v2": {
+            "ioctl": "IOCTL_USB_GET_NODE_CONNECTION_INFORMATION_EX_V2",
+            "code": "0x0022045C",
+            "ok": true,
+            "input_length": 16,
+            "input_hex_head": "13 00 00 00 10 00 00 00 04 00 00 00 00 00 00 00",
+            "output_buffer_size": 16,
+            "bytes_returned": 16,
+            "raw_hex": "13 00 00 00 10 00 00 00 04 00 00 00 00 00 00 00",
+            "decoded": {
+              "ConnectionIndex": 19,
+              "Length": 16,
+              "SupportedUsbProtocols": {
+                "value": 4,
+                "hex": "0x00000004",
+                "binary": "00000000000000000000000000000100",
+                "bits": {
+                  "Usb110": false,
+                  "Usb200": false,
+                  "Usb300": true
+                },
+                "unknown_bits_hex": "0x00000000"
+              },
+              "Flags": {
+                "value": 0,
+                "hex": "0x00000000",
+                "binary": "00000000000000000000000000000000",
+                "bits": {
+                  "DeviceIsOperatingAtSuperSpeedOrHigher": false,
+                  "DeviceIsSuperSpeedCapableOrHigher": false,
+                  "DeviceIsOperatingAtSuperSpeedPlusOrHigher": false,
+                  "DeviceIsSuperSpeedPlusCapableOrHigher": false
+                },
+                "unknown_bits_hex": "0x00000000"
+              }
+            }
+          },
+          "port_connector_properties": {
+            "ioctl": "IOCTL_USB_GET_PORT_CONNECTOR_PROPERTIES",
+            "code": "0x00220458",
+            "ok": true,
+            "input_length": 18,
+            "input_hex_head": "13 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00",
+            "output_buffer_size": 18,
+            "bytes_returned": 18,
+            "raw_hex": "13 00 00 00 12 00 00 00 02 00 00 00 00 00 00 00",
+            "raw_hex_note": "先頭 16 バイトのみ（以降は UTF-16 文字列。サニタイズのため decoded 側に記録）",
+            "decoded": {
+              "ConnectionIndex": 19,
+              "ActualLength": 18,
+              "UsbPortProperties": {
+                "value": 2,
+                "hex": "0x00000002",
+                "binary": "00000000000000000000000000000010",
+                "bits": {
+                  "PortIsUserConnectable": false,
+                  "PortIsDebugCapable": true,
+                  "PortHasMultipleCompanions": false,
+                  "PortConnectorIsTypeC": false
+                },
+                "unknown_bits_hex": "0x00000000"
+              },
+              "CompanionIndex": 0,
+              "CompanionPortNumber": 0,
+              "CompanionHubSymbolicLinkName": ""
+            }
+          },
+          "device": null
+        },
+        {
+          "port": 20,
+          "connection_information_ex": {
+            "ioctl": "IOCTL_USB_GET_NODE_CONNECTION_INFORMATION_EX",
+            "code": "0x00220448",
+            "ok": true,
+            "input_length": 387,
+            "input_hex_head": "14 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00",
+            "output_buffer_size": 387,
+            "bytes_returned": 35,
+            "raw_hex": "00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00",
+            "decoded": {
+              "ConnectionIndex": 0,
+              "DeviceDescriptor": {
+                "bLength": 0,
+                "bDescriptorType": 0,
+                "bcdUSB": 0,
+                "bDeviceClass": 0,
+                "bDeviceSubClass": 0,
+                "bDeviceProtocol": 0,
+                "bMaxPacketSize0": 0,
+                "idVendor": 0,
+                "idProduct": 0,
+                "bcdDevice": 0,
+                "iManufacturer": 0,
+                "iProduct": 0,
+                "iSerialNumber": "REDACTED",
+                "bNumConfigurations": 0,
+                "bcdUSB_hex": "0x0000",
+                "idVendor_hex": "0x0000",
+                "idProduct_hex": "0x0000"
+              },
+              "CurrentConfigurationValue": 0,
+              "Speed": 0,
+              "Speed_name": "UsbLowSpeed",
+              "DeviceIsHub": false,
+              "DeviceAddress": 0,
+              "NumberOfOpenPipes": 0,
+              "ConnectionStatus": 0,
+              "ConnectionStatus_name": "NoDeviceConnected",
+              "PipeList": []
+            }
+          },
+          "connection_information_ex_v2": {
+            "ioctl": "IOCTL_USB_GET_NODE_CONNECTION_INFORMATION_EX_V2",
+            "code": "0x0022045C",
+            "ok": true,
+            "input_length": 16,
+            "input_hex_head": "14 00 00 00 10 00 00 00 04 00 00 00 00 00 00 00",
+            "output_buffer_size": 16,
+            "bytes_returned": 16,
+            "raw_hex": "14 00 00 00 10 00 00 00 04 00 00 00 00 00 00 00",
+            "decoded": {
+              "ConnectionIndex": 20,
+              "Length": 16,
+              "SupportedUsbProtocols": {
+                "value": 4,
+                "hex": "0x00000004",
+                "binary": "00000000000000000000000000000100",
+                "bits": {
+                  "Usb110": false,
+                  "Usb200": false,
+                  "Usb300": true
+                },
+                "unknown_bits_hex": "0x00000000"
+              },
+              "Flags": {
+                "value": 0,
+                "hex": "0x00000000",
+                "binary": "00000000000000000000000000000000",
+                "bits": {
+                  "DeviceIsOperatingAtSuperSpeedOrHigher": false,
+                  "DeviceIsSuperSpeedCapableOrHigher": false,
+                  "DeviceIsOperatingAtSuperSpeedPlusOrHigher": false,
+                  "DeviceIsSuperSpeedPlusCapableOrHigher": false
+                },
+                "unknown_bits_hex": "0x00000000"
+              }
+            }
+          },
+          "port_connector_properties": {
+            "ioctl": "IOCTL_USB_GET_PORT_CONNECTOR_PROPERTIES",
+            "code": "0x00220458",
+            "ok": true,
+            "input_length": 18,
+            "input_hex_head": "14 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00",
+            "output_buffer_size": 18,
+            "bytes_returned": 18,
+            "raw_hex": "14 00 00 00 12 00 00 00 02 00 00 00 00 00 00 00",
+            "raw_hex_note": "先頭 16 バイトのみ（以降は UTF-16 文字列。サニタイズのため decoded 側に記録）",
+            "decoded": {
+              "ConnectionIndex": 20,
+              "ActualLength": 18,
+              "UsbPortProperties": {
+                "value": 2,
+                "hex": "0x00000002",
+                "binary": "00000000000000000000000000000010",
+                "bits": {
+                  "PortIsUserConnectable": false,
+                  "PortIsDebugCapable": true,
+                  "PortHasMultipleCompanions": false,
+                  "PortConnectorIsTypeC": false
+                },
+                "unknown_bits_hex": "0x00000000"
+              },
+              "CompanionIndex": 0,
+              "CompanionPortNumber": 0,
+              "CompanionHubSymbolicLinkName": ""
+            }
+          },
+          "device": null
+        },
+        {
+          "port": 21,
+          "connection_information_ex": {
+            "ioctl": "IOCTL_USB_GET_NODE_CONNECTION_INFORMATION_EX",
+            "code": "0x00220448",
+            "ok": true,
+            "input_length": 387,
+            "input_hex_head": "15 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00",
+            "output_buffer_size": 387,
+            "bytes_returned": 35,
+            "raw_hex": "00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00",
+            "decoded": {
+              "ConnectionIndex": 0,
+              "DeviceDescriptor": {
+                "bLength": 0,
+                "bDescriptorType": 0,
+                "bcdUSB": 0,
+                "bDeviceClass": 0,
+                "bDeviceSubClass": 0,
+                "bDeviceProtocol": 0,
+                "bMaxPacketSize0": 0,
+                "idVendor": 0,
+                "idProduct": 0,
+                "bcdDevice": 0,
+                "iManufacturer": 0,
+                "iProduct": 0,
+                "iSerialNumber": "REDACTED",
+                "bNumConfigurations": 0,
+                "bcdUSB_hex": "0x0000",
+                "idVendor_hex": "0x0000",
+                "idProduct_hex": "0x0000"
+              },
+              "CurrentConfigurationValue": 0,
+              "Speed": 0,
+              "Speed_name": "UsbLowSpeed",
+              "DeviceIsHub": false,
+              "DeviceAddress": 0,
+              "NumberOfOpenPipes": 0,
+              "ConnectionStatus": 0,
+              "ConnectionStatus_name": "NoDeviceConnected",
+              "PipeList": []
+            }
+          },
+          "connection_information_ex_v2": {
+            "ioctl": "IOCTL_USB_GET_NODE_CONNECTION_INFORMATION_EX_V2",
+            "code": "0x0022045C",
+            "ok": true,
+            "input_length": 16,
+            "input_hex_head": "15 00 00 00 10 00 00 00 04 00 00 00 00 00 00 00",
+            "output_buffer_size": 16,
+            "bytes_returned": 16,
+            "raw_hex": "15 00 00 00 10 00 00 00 04 00 00 00 00 00 00 00",
+            "decoded": {
+              "ConnectionIndex": 21,
+              "Length": 16,
+              "SupportedUsbProtocols": {
+                "value": 4,
+                "hex": "0x00000004",
+                "binary": "00000000000000000000000000000100",
+                "bits": {
+                  "Usb110": false,
+                  "Usb200": false,
+                  "Usb300": true
+                },
+                "unknown_bits_hex": "0x00000000"
+              },
+              "Flags": {
+                "value": 0,
+                "hex": "0x00000000",
+                "binary": "00000000000000000000000000000000",
+                "bits": {
+                  "DeviceIsOperatingAtSuperSpeedOrHigher": false,
+                  "DeviceIsSuperSpeedCapableOrHigher": false,
+                  "DeviceIsOperatingAtSuperSpeedPlusOrHigher": false,
+                  "DeviceIsSuperSpeedPlusCapableOrHigher": false
+                },
+                "unknown_bits_hex": "0x00000000"
+              }
+            }
+          },
+          "port_connector_properties": {
+            "ioctl": "IOCTL_USB_GET_PORT_CONNECTOR_PROPERTIES",
+            "code": "0x00220458",
+            "ok": true,
+            "input_length": 154,
+            "input_hex_head": "15 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00",
+            "output_buffer_size": 154,
+            "bytes_returned": 154,
+            "raw_hex": "15 00 00 00 9a 00 00 00 03 00 00 00 00 00 06 00",
+            "raw_hex_note": "先頭 16 バイトのみ（以降は UTF-16 文字列。サニタイズのため decoded 側に記録）",
+            "decoded": {
+              "ConnectionIndex": 21,
+              "ActualLength": 154,
+              "UsbPortProperties": {
+                "value": 3,
+                "hex": "0x00000003",
+                "binary": "00000000000000000000000000000011",
+                "bits": {
+                  "PortIsUserConnectable": true,
+                  "PortIsDebugCapable": true,
+                  "PortHasMultipleCompanions": false,
+                  "PortConnectorIsTypeC": false
+                },
+                "unknown_bits_hex": "0x00000000"
+              },
+              "CompanionIndex": 0,
+              "CompanionPortNumber": 6,
+              "CompanionHubSymbolicLinkName": "USB#ROOT_HUB30#4&1feef4ee&0&0#{f18a0e88-c30c-11d0-8815-00a0c906bed8}"
+            }
+          },
+          "device": null
+        },
+        {
+          "port": 22,
+          "connection_information_ex": {
+            "ioctl": "IOCTL_USB_GET_NODE_CONNECTION_INFORMATION_EX",
+            "code": "0x00220448",
+            "ok": true,
+            "input_length": 387,
+            "input_hex_head": "16 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00",
+            "output_buffer_size": 387,
+            "bytes_returned": 35,
+            "raw_hex": "00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00",
+            "decoded": {
+              "ConnectionIndex": 0,
+              "DeviceDescriptor": {
+                "bLength": 0,
+                "bDescriptorType": 0,
+                "bcdUSB": 0,
+                "bDeviceClass": 0,
+                "bDeviceSubClass": 0,
+                "bDeviceProtocol": 0,
+                "bMaxPacketSize0": 0,
+                "idVendor": 0,
+                "idProduct": 0,
+                "bcdDevice": 0,
+                "iManufacturer": 0,
+                "iProduct": 0,
+                "iSerialNumber": "REDACTED",
+                "bNumConfigurations": 0,
+                "bcdUSB_hex": "0x0000",
+                "idVendor_hex": "0x0000",
+                "idProduct_hex": "0x0000"
+              },
+              "CurrentConfigurationValue": 0,
+              "Speed": 0,
+              "Speed_name": "UsbLowSpeed",
+              "DeviceIsHub": false,
+              "DeviceAddress": 0,
+              "NumberOfOpenPipes": 0,
+              "ConnectionStatus": 0,
+              "ConnectionStatus_name": "NoDeviceConnected",
+              "PipeList": []
+            }
+          },
+          "connection_information_ex_v2": {
+            "ioctl": "IOCTL_USB_GET_NODE_CONNECTION_INFORMATION_EX_V2",
+            "code": "0x0022045C",
+            "ok": true,
+            "input_length": 16,
+            "input_hex_head": "16 00 00 00 10 00 00 00 04 00 00 00 00 00 00 00",
+            "output_buffer_size": 16,
+            "bytes_returned": 16,
+            "raw_hex": "16 00 00 00 10 00 00 00 04 00 00 00 00 00 00 00",
+            "decoded": {
+              "ConnectionIndex": 22,
+              "Length": 16,
+              "SupportedUsbProtocols": {
+                "value": 4,
+                "hex": "0x00000004",
+                "binary": "00000000000000000000000000000100",
+                "bits": {
+                  "Usb110": false,
+                  "Usb200": false,
+                  "Usb300": true
+                },
+                "unknown_bits_hex": "0x00000000"
+              },
+              "Flags": {
+                "value": 0,
+                "hex": "0x00000000",
+                "binary": "00000000000000000000000000000000",
+                "bits": {
+                  "DeviceIsOperatingAtSuperSpeedOrHigher": false,
+                  "DeviceIsSuperSpeedCapableOrHigher": false,
+                  "DeviceIsOperatingAtSuperSpeedPlusOrHigher": false,
+                  "DeviceIsSuperSpeedPlusCapableOrHigher": false
+                },
+                "unknown_bits_hex": "0x00000000"
+              }
+            }
+          },
+          "port_connector_properties": {
+            "ioctl": "IOCTL_USB_GET_PORT_CONNECTOR_PROPERTIES",
+            "code": "0x00220458",
+            "ok": true,
+            "input_length": 154,
+            "input_hex_head": "16 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00",
+            "output_buffer_size": 154,
+            "bytes_returned": 154,
+            "raw_hex": "16 00 00 00 9a 00 00 00 03 00 00 00 00 00 0c 00",
+            "raw_hex_note": "先頭 16 バイトのみ（以降は UTF-16 文字列。サニタイズのため decoded 側に記録）",
+            "decoded": {
+              "ConnectionIndex": 22,
+              "ActualLength": 154,
+              "UsbPortProperties": {
+                "value": 3,
+                "hex": "0x00000003",
+                "binary": "00000000000000000000000000000011",
+                "bits": {
+                  "PortIsUserConnectable": true,
+                  "PortIsDebugCapable": true,
+                  "PortHasMultipleCompanions": false,
+                  "PortConnectorIsTypeC": false
+                },
+                "unknown_bits_hex": "0x00000000"
+              },
+              "CompanionIndex": 0,
+              "CompanionPortNumber": 12,
+              "CompanionHubSymbolicLinkName": "USB#ROOT_HUB30#4&1feef4ee&0&0#{f18a0e88-c30c-11d0-8815-00a0c906bed8}"
+            }
+          },
+          "device": null
+        },
+        {
+          "port": 23,
+          "connection_information_ex": {
+            "ioctl": "IOCTL_USB_GET_NODE_CONNECTION_INFORMATION_EX",
+            "code": "0x00220448",
+            "ok": true,
+            "input_length": 387,
+            "input_hex_head": "17 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00",
+            "output_buffer_size": 387,
+            "bytes_returned": 35,
+            "raw_hex": "00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00",
+            "decoded": {
+              "ConnectionIndex": 0,
+              "DeviceDescriptor": {
+                "bLength": 0,
+                "bDescriptorType": 0,
+                "bcdUSB": 0,
+                "bDeviceClass": 0,
+                "bDeviceSubClass": 0,
+                "bDeviceProtocol": 0,
+                "bMaxPacketSize0": 0,
+                "idVendor": 0,
+                "idProduct": 0,
+                "bcdDevice": 0,
+                "iManufacturer": 0,
+                "iProduct": 0,
+                "iSerialNumber": "REDACTED",
+                "bNumConfigurations": 0,
+                "bcdUSB_hex": "0x0000",
+                "idVendor_hex": "0x0000",
+                "idProduct_hex": "0x0000"
+              },
+              "CurrentConfigurationValue": 0,
+              "Speed": 0,
+              "Speed_name": "UsbLowSpeed",
+              "DeviceIsHub": false,
+              "DeviceAddress": 0,
+              "NumberOfOpenPipes": 0,
+              "ConnectionStatus": 0,
+              "ConnectionStatus_name": "NoDeviceConnected",
+              "PipeList": []
+            }
+          },
+          "connection_information_ex_v2": {
+            "ioctl": "IOCTL_USB_GET_NODE_CONNECTION_INFORMATION_EX_V2",
+            "code": "0x0022045C",
+            "ok": true,
+            "input_length": 16,
+            "input_hex_head": "17 00 00 00 10 00 00 00 04 00 00 00 00 00 00 00",
+            "output_buffer_size": 16,
+            "bytes_returned": 16,
+            "raw_hex": "17 00 00 00 10 00 00 00 04 00 00 00 00 00 00 00",
+            "decoded": {
+              "ConnectionIndex": 23,
+              "Length": 16,
+              "SupportedUsbProtocols": {
+                "value": 4,
+                "hex": "0x00000004",
+                "binary": "00000000000000000000000000000100",
+                "bits": {
+                  "Usb110": false,
+                  "Usb200": false,
+                  "Usb300": true
+                },
+                "unknown_bits_hex": "0x00000000"
+              },
+              "Flags": {
+                "value": 0,
+                "hex": "0x00000000",
+                "binary": "00000000000000000000000000000000",
+                "bits": {
+                  "DeviceIsOperatingAtSuperSpeedOrHigher": false,
+                  "DeviceIsSuperSpeedCapableOrHigher": false,
+                  "DeviceIsOperatingAtSuperSpeedPlusOrHigher": false,
+                  "DeviceIsSuperSpeedPlusCapableOrHigher": false
+                },
+                "unknown_bits_hex": "0x00000000"
+              }
+            }
+          },
+          "port_connector_properties": {
+            "ioctl": "IOCTL_USB_GET_PORT_CONNECTOR_PROPERTIES",
+            "code": "0x00220458",
+            "ok": true,
+            "input_length": 154,
+            "input_hex_head": "17 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00",
+            "output_buffer_size": 154,
+            "bytes_returned": 154,
+            "raw_hex": "17 00 00 00 9a 00 00 00 03 00 00 00 00 00 0b 00",
+            "raw_hex_note": "先頭 16 バイトのみ（以降は UTF-16 文字列。サニタイズのため decoded 側に記録）",
+            "decoded": {
+              "ConnectionIndex": 23,
+              "ActualLength": 154,
+              "UsbPortProperties": {
+                "value": 3,
+                "hex": "0x00000003",
+                "binary": "00000000000000000000000000000011",
+                "bits": {
+                  "PortIsUserConnectable": true,
+                  "PortIsDebugCapable": true,
+                  "PortHasMultipleCompanions": false,
+                  "PortConnectorIsTypeC": false
+                },
+                "unknown_bits_hex": "0x00000000"
+              },
+              "CompanionIndex": 0,
+              "CompanionPortNumber": 11,
+              "CompanionHubSymbolicLinkName": "USB#ROOT_HUB30#4&1feef4ee&0&0#{f18a0e88-c30c-11d0-8815-00a0c906bed8}"
+            }
+          },
+          "device": null
+        },
+        {
+          "port": 24,
+          "connection_information_ex": {
+            "ioctl": "IOCTL_USB_GET_NODE_CONNECTION_INFORMATION_EX",
+            "code": "0x00220448",
+            "ok": true,
+            "input_length": 387,
+            "input_hex_head": "18 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00",
+            "output_buffer_size": 387,
+            "bytes_returned": 35,
+            "raw_hex": "00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00",
+            "decoded": {
+              "ConnectionIndex": 0,
+              "DeviceDescriptor": {
+                "bLength": 0,
+                "bDescriptorType": 0,
+                "bcdUSB": 0,
+                "bDeviceClass": 0,
+                "bDeviceSubClass": 0,
+                "bDeviceProtocol": 0,
+                "bMaxPacketSize0": 0,
+                "idVendor": 0,
+                "idProduct": 0,
+                "bcdDevice": 0,
+                "iManufacturer": 0,
+                "iProduct": 0,
+                "iSerialNumber": "REDACTED",
+                "bNumConfigurations": 0,
+                "bcdUSB_hex": "0x0000",
+                "idVendor_hex": "0x0000",
+                "idProduct_hex": "0x0000"
+              },
+              "CurrentConfigurationValue": 0,
+              "Speed": 0,
+              "Speed_name": "UsbLowSpeed",
+              "DeviceIsHub": false,
+              "DeviceAddress": 0,
+              "NumberOfOpenPipes": 0,
+              "ConnectionStatus": 0,
+              "ConnectionStatus_name": "NoDeviceConnected",
+              "PipeList": []
+            }
+          },
+          "connection_information_ex_v2": {
+            "ioctl": "IOCTL_USB_GET_NODE_CONNECTION_INFORMATION_EX_V2",
+            "code": "0x0022045C",
+            "ok": true,
+            "input_length": 16,
+            "input_hex_head": "18 00 00 00 10 00 00 00 04 00 00 00 00 00 00 00",
+            "output_buffer_size": 16,
+            "bytes_returned": 16,
+            "raw_hex": "18 00 00 00 10 00 00 00 04 00 00 00 00 00 00 00",
+            "decoded": {
+              "ConnectionIndex": 24,
+              "Length": 16,
+              "SupportedUsbProtocols": {
+                "value": 4,
+                "hex": "0x00000004",
+                "binary": "00000000000000000000000000000100",
+                "bits": {
+                  "Usb110": false,
+                  "Usb200": false,
+                  "Usb300": true
+                },
+                "unknown_bits_hex": "0x00000000"
+              },
+              "Flags": {
+                "value": 0,
+                "hex": "0x00000000",
+                "binary": "00000000000000000000000000000000",
+                "bits": {
+                  "DeviceIsOperatingAtSuperSpeedOrHigher": false,
+                  "DeviceIsSuperSpeedCapableOrHigher": false,
+                  "DeviceIsOperatingAtSuperSpeedPlusOrHigher": false,
+                  "DeviceIsSuperSpeedPlusCapableOrHigher": false
+                },
+                "unknown_bits_hex": "0x00000000"
+              }
+            }
+          },
+          "port_connector_properties": {
+            "ioctl": "IOCTL_USB_GET_PORT_CONNECTOR_PROPERTIES",
+            "code": "0x00220458",
+            "ok": true,
+            "input_length": 154,
+            "input_hex_head": "18 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00",
+            "output_buffer_size": 154,
+            "bytes_returned": 154,
+            "raw_hex": "18 00 00 00 9a 00 00 00 03 00 00 00 00 00 07 00",
+            "raw_hex_note": "先頭 16 バイトのみ（以降は UTF-16 文字列。サニタイズのため decoded 側に記録）",
+            "decoded": {
+              "ConnectionIndex": 24,
+              "ActualLength": 154,
+              "UsbPortProperties": {
+                "value": 3,
+                "hex": "0x00000003",
+                "binary": "00000000000000000000000000000011",
+                "bits": {
+                  "PortIsUserConnectable": true,
+                  "PortIsDebugCapable": true,
+                  "PortHasMultipleCompanions": false,
+                  "PortConnectorIsTypeC": false
+                },
+                "unknown_bits_hex": "0x00000000"
+              },
+              "CompanionIndex": 0,
+              "CompanionPortNumber": 7,
+              "CompanionHubSymbolicLinkName": "USB#ROOT_HUB30#4&1feef4ee&0&0#{f18a0e88-c30c-11d0-8815-00a0c906bed8}"
+            }
+          },
+          "device": null
+        },
+        {
+          "port": 25,
+          "connection_information_ex": {
+            "ioctl": "IOCTL_USB_GET_NODE_CONNECTION_INFORMATION_EX",
+            "code": "0x00220448",
+            "ok": true,
+            "input_length": 387,
+            "input_hex_head": "19 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00",
+            "output_buffer_size": 387,
+            "bytes_returned": 35,
+            "raw_hex": "00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00",
+            "decoded": {
+              "ConnectionIndex": 0,
+              "DeviceDescriptor": {
+                "bLength": 0,
+                "bDescriptorType": 0,
+                "bcdUSB": 0,
+                "bDeviceClass": 0,
+                "bDeviceSubClass": 0,
+                "bDeviceProtocol": 0,
+                "bMaxPacketSize0": 0,
+                "idVendor": 0,
+                "idProduct": 0,
+                "bcdDevice": 0,
+                "iManufacturer": 0,
+                "iProduct": 0,
+                "iSerialNumber": "REDACTED",
+                "bNumConfigurations": 0,
+                "bcdUSB_hex": "0x0000",
+                "idVendor_hex": "0x0000",
+                "idProduct_hex": "0x0000"
+              },
+              "CurrentConfigurationValue": 0,
+              "Speed": 0,
+              "Speed_name": "UsbLowSpeed",
+              "DeviceIsHub": false,
+              "DeviceAddress": 0,
+              "NumberOfOpenPipes": 0,
+              "ConnectionStatus": 0,
+              "ConnectionStatus_name": "NoDeviceConnected",
+              "PipeList": []
+            }
+          },
+          "connection_information_ex_v2": {
+            "ioctl": "IOCTL_USB_GET_NODE_CONNECTION_INFORMATION_EX_V2",
+            "code": "0x0022045C",
+            "ok": true,
+            "input_length": 16,
+            "input_hex_head": "19 00 00 00 10 00 00 00 04 00 00 00 00 00 00 00",
+            "output_buffer_size": 16,
+            "bytes_returned": 16,
+            "raw_hex": "19 00 00 00 10 00 00 00 04 00 00 00 00 00 00 00",
+            "decoded": {
+              "ConnectionIndex": 25,
+              "Length": 16,
+              "SupportedUsbProtocols": {
+                "value": 4,
+                "hex": "0x00000004",
+                "binary": "00000000000000000000000000000100",
+                "bits": {
+                  "Usb110": false,
+                  "Usb200": false,
+                  "Usb300": true
+                },
+                "unknown_bits_hex": "0x00000000"
+              },
+              "Flags": {
+                "value": 0,
+                "hex": "0x00000000",
+                "binary": "00000000000000000000000000000000",
+                "bits": {
+                  "DeviceIsOperatingAtSuperSpeedOrHigher": false,
+                  "DeviceIsSuperSpeedCapableOrHigher": false,
+                  "DeviceIsOperatingAtSuperSpeedPlusOrHigher": false,
+                  "DeviceIsSuperSpeedPlusCapableOrHigher": false
+                },
+                "unknown_bits_hex": "0x00000000"
+              }
+            }
+          },
+          "port_connector_properties": {
+            "ioctl": "IOCTL_USB_GET_PORT_CONNECTOR_PROPERTIES",
+            "code": "0x00220458",
+            "ok": true,
+            "input_length": 154,
+            "input_hex_head": "19 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00",
+            "output_buffer_size": 154,
+            "bytes_returned": 154,
+            "raw_hex": "19 00 00 00 9a 00 00 00 03 00 00 00 00 00 05 00",
+            "raw_hex_note": "先頭 16 バイトのみ（以降は UTF-16 文字列。サニタイズのため decoded 側に記録）",
+            "decoded": {
+              "ConnectionIndex": 25,
+              "ActualLength": 154,
+              "UsbPortProperties": {
+                "value": 3,
+                "hex": "0x00000003",
+                "binary": "00000000000000000000000000000011",
+                "bits": {
+                  "PortIsUserConnectable": true,
+                  "PortIsDebugCapable": true,
+                  "PortHasMultipleCompanions": false,
+                  "PortConnectorIsTypeC": false
+                },
+                "unknown_bits_hex": "0x00000000"
+              },
+              "CompanionIndex": 0,
+              "CompanionPortNumber": 5,
+              "CompanionHubSymbolicLinkName": "USB#ROOT_HUB30#4&1feef4ee&0&0#{f18a0e88-c30c-11d0-8815-00a0c906bed8}"
+            }
+          },
+          "device": null
+        },
+        {
+          "port": 26,
+          "connection_information_ex": {
+            "ioctl": "IOCTL_USB_GET_NODE_CONNECTION_INFORMATION_EX",
+            "code": "0x00220448",
+            "ok": true,
+            "input_length": 387,
+            "input_hex_head": "1a 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00",
+            "output_buffer_size": 387,
+            "bytes_returned": 35,
+            "raw_hex": "00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00",
+            "decoded": {
+              "ConnectionIndex": 0,
+              "DeviceDescriptor": {
+                "bLength": 0,
+                "bDescriptorType": 0,
+                "bcdUSB": 0,
+                "bDeviceClass": 0,
+                "bDeviceSubClass": 0,
+                "bDeviceProtocol": 0,
+                "bMaxPacketSize0": 0,
+                "idVendor": 0,
+                "idProduct": 0,
+                "bcdDevice": 0,
+                "iManufacturer": 0,
+                "iProduct": 0,
+                "iSerialNumber": "REDACTED",
+                "bNumConfigurations": 0,
+                "bcdUSB_hex": "0x0000",
+                "idVendor_hex": "0x0000",
+                "idProduct_hex": "0x0000"
+              },
+              "CurrentConfigurationValue": 0,
+              "Speed": 0,
+              "Speed_name": "UsbLowSpeed",
+              "DeviceIsHub": false,
+              "DeviceAddress": 0,
+              "NumberOfOpenPipes": 0,
+              "ConnectionStatus": 0,
+              "ConnectionStatus_name": "NoDeviceConnected",
+              "PipeList": []
+            }
+          },
+          "connection_information_ex_v2": {
+            "ioctl": "IOCTL_USB_GET_NODE_CONNECTION_INFORMATION_EX_V2",
+            "code": "0x0022045C",
+            "ok": true,
+            "input_length": 16,
+            "input_hex_head": "1a 00 00 00 10 00 00 00 04 00 00 00 00 00 00 00",
+            "output_buffer_size": 16,
+            "bytes_returned": 16,
+            "raw_hex": "1a 00 00 00 10 00 00 00 04 00 00 00 00 00 00 00",
+            "decoded": {
+              "ConnectionIndex": 26,
+              "Length": 16,
+              "SupportedUsbProtocols": {
+                "value": 4,
+                "hex": "0x00000004",
+                "binary": "00000000000000000000000000000100",
+                "bits": {
+                  "Usb110": false,
+                  "Usb200": false,
+                  "Usb300": true
+                },
+                "unknown_bits_hex": "0x00000000"
+              },
+              "Flags": {
+                "value": 0,
+                "hex": "0x00000000",
+                "binary": "00000000000000000000000000000000",
+                "bits": {
+                  "DeviceIsOperatingAtSuperSpeedOrHigher": false,
+                  "DeviceIsSuperSpeedCapableOrHigher": false,
+                  "DeviceIsOperatingAtSuperSpeedPlusOrHigher": false,
+                  "DeviceIsSuperSpeedPlusCapableOrHigher": false
+                },
+                "unknown_bits_hex": "0x00000000"
+              }
+            }
+          },
+          "port_connector_properties": {
+            "ioctl": "IOCTL_USB_GET_PORT_CONNECTOR_PROPERTIES",
+            "code": "0x00220458",
+            "ok": true,
+            "input_length": 18,
+            "input_hex_head": "1a 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00",
+            "output_buffer_size": 18,
+            "bytes_returned": 18,
+            "raw_hex": "1a 00 00 00 12 00 00 00 02 00 00 00 00 00 00 00",
+            "raw_hex_note": "先頭 16 バイトのみ（以降は UTF-16 文字列。サニタイズのため decoded 側に記録）",
+            "decoded": {
+              "ConnectionIndex": 26,
+              "ActualLength": 18,
+              "UsbPortProperties": {
+                "value": 2,
+                "hex": "0x00000002",
+                "binary": "00000000000000000000000000000010",
+                "bits": {
+                  "PortIsUserConnectable": false,
+                  "PortIsDebugCapable": true,
+                  "PortHasMultipleCompanions": false,
+                  "PortConnectorIsTypeC": false
+                },
+                "unknown_bits_hex": "0x00000000"
+              },
+              "CompanionIndex": 0,
+              "CompanionPortNumber": 0,
+              "CompanionHubSymbolicLinkName": ""
+            }
+          },
+          "device": null
+        }
+      ]
+    }
+  ],
+  "ioctl_counts": {
+    "IOCTL_USB_GET_NODE_INFORMATION": {
+      "ok": 1,
+      "failed": 0
+    },
+    "IOCTL_USB_GET_HUB_INFORMATION_EX": {
+      "ok": 1,
+      "failed": 0
+    },
+    "IOCTL_USB_GET_HUB_CAPABILITIES_EX": {
+      "ok": 1,
+      "failed": 0
+    },
+    "IOCTL_USB_GET_NODE_CONNECTION_INFORMATION_EX": {
+      "ok": 26,
+      "failed": 0
+    },
+    "IOCTL_USB_GET_NODE_CONNECTION_INFORMATION_EX_V2": {
+      "ok": 26,
+      "failed": 0
+    },
+    "IOCTL_USB_GET_PORT_CONNECTOR_PROPERTIES": {
+      "ok": 26,
+      "failed": 0
+    },
+    "IOCTL_USB_GET_NODE_CONNECTION_DRIVERKEY_NAME": {
+      "ok": 6,
+      "failed": 0
+    }
+  },
+  "target": {
+    "device": "346D:5678",
+    "matches": [
+      {
+        "vid": 13421,
+        "pid": 22136,
+        "is_hub": false,
+        "connection_status": "DeviceConnected",
+        "hub_index": 0,
+        "hub_description": "USB ルート ハブ (USB 3.0)",
+        "hub_type": "UsbRootHub",
+        "port": 11,
+        "path_from_root": [
+          {
+            "hub_index": 0,
+            "port": 11
+          }
+        ],
+        "device_description": "USB Device",
+        "port_supported_usb_protocols": {
+          "value": 3,
+          "hex": "0x00000003",
+          "binary": "00000000000000000000000000000011",
+          "bits": {
+            "Usb110": true,
+            "Usb200": true,
+            "Usb300": false
+          },
+          "unknown_bits_hex": "0x00000000"
+        },
+        "port_properties": {
+          "value": 1,
+          "hex": "0x00000001",
+          "binary": "00000000000000000000000000000001",
+          "bits": {
+            "PortIsUserConnectable": true,
+            "PortIsDebugCapable": false,
+            "PortHasMultipleCompanions": false,
+            "PortConnectorIsTypeC": false
+          },
+          "unknown_bits_hex": "0x00000000"
+        },
+        "companion": {
+          "hub_index": 0,
+          "port": 23,
+          "supported_usb_protocols": {
+            "value": 4,
+            "hex": "0x00000004",
+            "binary": "00000000000000000000000000000100",
+            "bits": {
+              "Usb110": false,
+              "Usb200": false,
+              "Usb300": true
+            },
+            "unknown_bits_hex": "0x00000000"
+          }
+        },
+        "speed": 2,
+        "speed_name": "UsbHighSpeed",
+        "v2_flags": {
+          "value": 2,
+          "hex": "0x00000002",
+          "binary": "00000000000000000000000000000010",
+          "bits": {
+            "DeviceIsOperatingAtSuperSpeedOrHigher": false,
+            "DeviceIsSuperSpeedCapableOrHigher": true,
+            "DeviceIsOperatingAtSuperSpeedPlusOrHigher": false,
+            "DeviceIsSuperSpeedPlusCapableOrHigher": false
+          },
+          "unknown_bits_hex": "0x00000000"
+        }
+      }
+    ]
+  }
+}

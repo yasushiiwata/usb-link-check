@@ -1,0 +1,159 @@
+{
+  "collector": "usb-link-check tools/collect_dump.py",
+  "collector_version": "0.1.0",
+  "label": "windows_port11_ss_fail",
+  "collected_at": "2026-09-20T06:51:49+09:00",
+  "platform": {
+    "system": "Windows",
+    "release": "11",
+    "version": "10.0.26200",
+    "machine": "AMD64",
+    "python": "3.12.10 (tags/v3.12.10:0cc8128, Apr  8 2025, 12:21:36) [MSC v.1943 64 bit (AMD64)]",
+    "windows_build": 26200,
+    "pointer_size": 8
+  },
+  "is_admin": false,
+  "target": {
+    "device": "346D:5678",
+    "matches": [
+      {
+        "vid": 13421,
+        "pid": 22136,
+        "is_hub": false,
+        "connection_status": "DeviceConnected",
+        "hub_index": 0,
+        "hub_description": "USB ルート ハブ (USB 3.0)",
+        "hub_type": "UsbRootHub",
+        "port": 11,
+        "path_from_root": [
+          {
+            "hub_index": 0,
+            "port": 11
+          }
+        ],
+        "device_description": "USB Device",
+        "port_supported_usb_protocols": {
+          "value": 3,
+          "hex": "0x00000003",
+          "binary": "00000000000000000000000000000011",
+          "bits": {
+            "Usb110": true,
+            "Usb200": true,
+            "Usb300": false
+          },
+          "unknown_bits_hex": "0x00000000"
+        },
+        "port_properties": {
+          "value": 1,
+          "hex": "0x00000001",
+          "binary": "00000000000000000000000000000001",
+          "bits": {
+            "PortIsUserConnectable": true,
+            "PortIsDebugCapable": false,
+            "PortHasMultipleCompanions": false,
+            "PortConnectorIsTypeC": false
+          },
+          "unknown_bits_hex": "0x00000000"
+        },
+        "companion": {
+          "hub_index": 0,
+          "port": 23,
+          "supported_usb_protocols": {
+            "value": 4,
+            "hex": "0x00000004",
+            "binary": "00000000000000000000000000000100",
+            "bits": {
+              "Usb110": false,
+              "Usb200": false,
+              "Usb300": true
+            },
+            "unknown_bits_hex": "0x00000000"
+          }
+        },
+        "speed": 2,
+        "speed_name": "UsbHighSpeed",
+        "v2_flags": {
+          "value": 2,
+          "hex": "0x00000002",
+          "binary": "00000000000000000000000000000010",
+          "bits": {
+            "DeviceIsOperatingAtSuperSpeedOrHigher": false,
+            "DeviceIsSuperSpeedCapableOrHigher": true,
+            "DeviceIsOperatingAtSuperSpeedPlusOrHigher": false,
+            "DeviceIsSuperSpeedPlusCapableOrHigher": false
+          },
+          "unknown_bits_hex": "0x00000000"
+        }
+      }
+    ]
+  },
+  "files": [
+    "windows_port11_ss_fail.json"
+  ],
+  "items": [
+    {
+      "name": "ホストコントローラの列挙",
+      "status": "ok",
+      "count": 1
+    },
+    {
+      "name": "USB デバイスの列挙（driver key 対応表）",
+      "status": "ok",
+      "count": 13
+    },
+    {
+      "name": "USB ハブの列挙 (GUID_DEVINTERFACE_USB_HUB)",
+      "status": "ok",
+      "count": 1
+    },
+    {
+      "name": "IOCTL_USB_GET_HUB_CAPABILITIES_EX",
+      "status": "ok",
+      "succeeded": 1,
+      "failed": 0
+    },
+    {
+      "name": "IOCTL_USB_GET_HUB_INFORMATION_EX",
+      "status": "ok",
+      "succeeded": 1,
+      "failed": 0
+    },
+    {
+      "name": "IOCTL_USB_GET_NODE_CONNECTION_DRIVERKEY_NAME",
+      "status": "ok",
+      "succeeded": 6,
+      "failed": 0
+    },
+    {
+      "name": "IOCTL_USB_GET_NODE_CONNECTION_INFORMATION_EX",
+      "status": "ok",
+      "succeeded": 26,
+      "failed": 0
+    },
+    {
+      "name": "IOCTL_USB_GET_NODE_CONNECTION_INFORMATION_EX_V2",
+      "status": "ok",
+      "succeeded": 26,
+      "failed": 0
+    },
+    {
+      "name": "IOCTL_USB_GET_NODE_INFORMATION",
+      "status": "ok",
+      "succeeded": 1,
+      "failed": 0
+    },
+    {
+      "name": "IOCTL_USB_GET_PORT_CONNECTOR_PROPERTIES",
+      "status": "ok",
+      "succeeded": 26,
+      "failed": 0
+    },
+    {
+      "name": "Windows 採取結果の保存",
+      "status": "ok",
+      "file": "D:\\dev\\usb-link-check\\tests\\fixtures\\raw\\windows_port11_ss_fail.json"
+    }
+  ],
+  "failures": [],
+  "warnings": []
+}
