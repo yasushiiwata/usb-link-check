@@ -93,6 +93,41 @@ class Capability:
         return self.speed.short
 
 
+#: ポートのコネクタ形状（PortConnectorIsTypeC より。SPEC.md 5.4）
+ConnectorType = Literal["type_c", "type_a", "unknown"]
+
+_CONNECTOR_DISPLAY: dict[str, str] = {
+    "type_c": "Type-C",
+    "type_a": "Type-A",
+    "unknown": "不明",
+}
+
+
+@dataclass(frozen=True)
+class EMarker:
+    """eMarker 搭載の推定（SPEC.md 5.4）。
+
+    直接読み取る手段が無いため、**必ず推定**である。`EXACT` に相当する状態を持たない。
+    """
+
+    state: Literal["likely_present", "absent", "unknown"]
+    certainty: Literal["likely", "unknown"]
+    reason: str
+
+    @property
+    def display(self) -> str:
+        label = {
+            "likely_present": "あると推定",
+            "absent": "なし",
+            "unknown": "不明",
+        }[self.state]
+        return f"{label}（{self.reason}）確度: {self.certainty}"
+
+
+def connector_display(connector: ConnectorType) -> str:
+    return _CONNECTOR_DISPLAY[connector]
+
+
 Verdict = Literal["OPTIMAL", "IMPROVABLE", "UNDETERMINED", "NOT_DETECTED"]
 
 #: 判定と終了コードの対応（SPEC.md 6.3）
@@ -115,6 +150,8 @@ class ChainElement:
     name: str
     capability: Capability
     is_bottleneck: bool = False
+    #: OS の内部表記など、折り返さずにそのまま見せたい補助情報（例: Port_#0024.Hub_#0001）
+    detail: str | None = None
 
 
 @dataclass
@@ -142,6 +179,9 @@ class Diagnosis:
     device_name: str | None = None
     vid: int | None = None
     pid: int | None = None
+    #: ポートのコネクタ形状と eMarker の推定（SPEC.md 5.4）
+    connector_type: ConnectorType = "unknown"
+    emarker: EMarker | None = None
 
     @property
     def exit_code(self) -> int:

@@ -5,7 +5,7 @@
 
 import pytest
 
-from usb_link_check.diagnosis import capability_min, diagnose
+from usb_link_check.diagnosis import capability_min, diagnose, estimate_emarker
 from usb_link_check.models import Capability, ChainElement, Confidence, LinkSpeed
 
 HIGH = LinkSpeed.HIGH_SPEED
@@ -161,6 +161,44 @@ def test_unknown_link_speed_is_undetermined() -> None:
     d = diagnose(None, Capability.exact(SS), Capability.exact(SS))
     assert d.verdict == "UNDETERMINED"
     assert d.link_speed is None
+
+
+@pytest.mark.parametrize(
+    ("connector", "link", "state", "certainty"),
+    [
+        # Type-A: A-to-C / A-to-A に eMarker は搭載されない
+        ("type_a", SS, "absent", "likely"),
+        ("type_a", HIGH, "absent", "likely"),
+        # Type-C かつ 5Gbps 以上: 仕様上 eMarker 必須のケーブルに該当する
+        ("type_c", SS, "likely_present", "likely"),
+        ("type_c", SSP, "likely_present", "likely"),
+        # Type-C かつ 480Mbps 以下: USB2 のみの C-to-C か変換ケーブルかを区別できない
+        ("type_c", HIGH, "unknown", "unknown"),
+        ("type_c", None, "unknown", "unknown"),
+        ("unknown", SS, "unknown", "unknown"),
+    ],
+)
+def test_emarker_estimation(
+    connector: str, link: LinkSpeed | None, state: str, certainty: str
+) -> None:
+    """SPEC.md 5.4 の推定ルール。要実機検証: Type-C ポートを持つ機体で未確認。"""
+    emarker = estimate_emarker(connector, link)  # type: ignore[arg-type]
+    assert (emarker.state, emarker.certainty) == (state, certainty)
+    assert emarker.reason  # 理由を必ず添える
+
+
+def test_emarker_is_never_exact() -> None:
+    """eMarker は直接読めないため、断定に相当する確度を持たない（SPEC.md 5.4）。"""
+    for connector in ("type_a", "type_c", "unknown"):
+        for link in (None, LinkSpeed.LOW_SPEED, HIGH, SS, SSP):
+            assert estimate_emarker(connector, link).certainty in {"likely", "unknown"}  # type: ignore[arg-type]
+
+
+def test_diagnose_attaches_connector_and_emarker() -> None:
+    d = diagnose(HIGH, Capability.exact(HIGH), Capability.exact(SS), connector_type="type_a")
+    assert d.connector_type == "type_a"
+    assert d.emarker is not None
+    assert d.emarker.state == "absent"
 
 
 @pytest.mark.parametrize(

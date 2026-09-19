@@ -12,8 +12,15 @@ from __future__ import annotations
 from typing import Any
 
 from ..diagnosis import diagnose
-from ..models import Capability, ChainElement, Diagnosis, LinkSpeed
-from .base import DeviceSummary, UsbPlatform
+from ..models import (
+    Capability,
+    ChainElement,
+    ConnectorType,
+    Diagnosis,
+    LinkSpeed,
+    connector_display,
+)
+from .base import DeviceSummary, PortSummary, UsbPlatform
 
 #: SetupAPI のサービス名からマスストレージを判定する（bDeviceClass は 0 のことがある）
 MASS_STORAGE_SERVICES = {"usbstor", "uaspstor"}
@@ -121,6 +128,12 @@ def describe_devices(dump: dict[str, Any]) -> list[dict[str, Any]]:
                     "path_from_root": path,
                     "device_description": dev.get("bus_reported_description")
                     or dev.get("description"),
+                    "friendly_name": dev.get("friendly_name"),
+                    "child_names": _child_names(dev.get("children") or []),
+                    "bus_reported_description": dev.get("bus_reported_description"),
+                    "description": dev.get("description"),
+                    "manufacturer": (rec_strings := p.get("strings") or {}).get("iManufacturer"),
+                    "product": rec_strings.get("iProduct"),
                     "device_class": dd.get("bDeviceClass"),
                     "service": dev.get("service"),
                     "location_information": dev.get("location_information"),
@@ -203,12 +216,37 @@ def device_capability(rec: dict[str, Any], link: LinkSpeed | None) -> Capability
     return Capability.at_least(link)
 
 
-def port_name(rec: dict[str, Any]) -> str:
-    """表示用のポート名。ハブ番号・ポート番号とコンパニオンの有無を含める。"""
+def connector_type(rec: dict[str, Any]) -> ConnectorType:
+    """ポートのコネクタ形状（SPEC.md 5.4）。
+
+    要実機検証: 開発機のポートはすべて Type-A で、Type-C 側は実機で確認できていない。
+    """
+    props = rec.get("port_properties")
+    if not props:
+        return "unknown"
+    bits = props.get("bits") or {}
+    if "PortConnectorIsTypeC" not in bits:
+        return "unknown"
+    return "type_c" if bits["PortConnectorIsTypeC"] else "type_a"
+
+
+def port_kind(rec: dict[str, Any]) -> str:
+    """そのポートが USB3 対応コネクタか USB2 専用かの表示。"""
     protocols = port_protocols(rec)
-    kind = "USB3 コネクタ" if protocols & _USB300 else "USB2 コネクタ"
-    location = rec.get("location_information") or f"ハブ{rec['hub_index']}/ポート{rec['port']}"
-    return f"{location} ({kind})"
+    return "USB3コネクタ" if protocols & _USB300 else "USB2専用"
+
+
+def port_name(rec: dict[str, Any]) -> str:
+    """人間が読めるポート表記（SPEC.md 6.1）。"""
+    parts = [port_kind(rec), connector_display(connector_type(rec))]
+    c = rec.get("companion")
+    parts.append(f"コンパニオン: ポート{c['port']}" if c else "コンパニオンなし")
+    return f"ポート{rec['port']}（{' / '.join(parts)}）"
+
+
+def port_detail(rec: dict[str, Any]) -> str | None:
+    """OS の内部表記（USBView / UsbTreeView との照合用）。"""
+    return rec.get("location_information")
 
 
 def hub_elements(dump: dict[str, Any], rec: dict[str, Any]) -> list[ChainElement]:
@@ -242,8 +280,46 @@ def hub_elements(dump: dict[str, Any], rec: dict[str, Any]) -> list[ChainElement
     return elements
 
 
+def _child_names(children: list[dict[str, Any]]) -> list[str]:
+    """子デバイスの FriendlyName を深さ優先で集める（マスストレージの製品名は子側に入る）。"""
+    names: list[str] = []
+    for child in children:
+        if child.get("friendly_name"):
+            names.append(child["friendly_name"])
+        names.extend(_child_names(child.get("children") or []))
+    return names
+
+
+def _from_string_descriptors(rec: dict[str, Any]) -> str | None:
+    """iManufacturer + iProduct を組み立てる（重複する接頭辞は付けない）。"""
+    manufacturer = (rec.get("manufacturer") or "").strip()
+    product = (rec.get("product") or "").strip()
+    if not product:
+        return manufacturer or None
+    if manufacturer and not product.lower().startswith(manufacturer.lower()):
+        return f"{manufacturer} {product}"
+    return product
+
+
 def device_name(rec: dict[str, Any]) -> str:
-    return rec.get("device_description") or f"{rec.get('vid') or 0:04X}:{rec.get('pid') or 0:04X}"
+    """表示用のデバイス名（SPEC.md 4.2 補助の解決順）。取得できたものを順に採用する。"""
+    child_names = rec.get("child_names") or []
+    child = child_names[0] if child_names else None
+    strings = _from_string_descriptors(rec)
+    # マスストレージは製品名が子デバイス（USBSTOR）側に入るので子を優先する。
+    # それ以外の複合デバイスでは子が機能名（例: Bluetooth Device (PAN)）になるため後回しにする。
+    preferred = (child, strings) if is_mass_storage(rec) else (strings, child)
+    candidates = (
+        rec.get("friendly_name"),
+        *preferred,
+        rec.get("bus_reported_description"),
+        rec.get("description"),
+        rec.get("device_description"),
+    )
+    for candidate in candidates:
+        if candidate and candidate.strip():
+            return candidate.strip()
+    return f"{rec.get('vid') or 0:04X}:{rec.get('pid') or 0:04X}"
 
 
 def is_mass_storage(rec: dict[str, Any]) -> bool:
@@ -252,15 +328,56 @@ def is_mass_storage(rec: dict[str, Any]) -> bool:
 
 
 def to_summary(rec: dict[str, Any]) -> DeviceSummary:
+    link = link_speed(rec)
     return DeviceSummary(
         name=device_name(rec),
         vid=rec.get("vid"),
         pid=rec.get("pid"),
-        link_speed=link_speed(rec),
+        link_speed=link,
         location=f"ハブ{rec['hub_index']}/ポート{rec['port']}",
         is_mass_storage=is_mass_storage(rec),
+        port_capability=port_capability(rec),
+        device_capability=device_capability(rec, link),
+        connector=connector_type(rec),
+        port_kind=port_kind(rec),
         raw=rec,
     )
+
+
+def describe_ports(dump: dict[str, Any]) -> list[PortSummary]:
+    """全ポート（空きポートを含む）の正体を返す（`--list --all` 用）。"""
+    hubs = dump.get("hubs", [])
+    by_index = {h["index"]: h for h in hubs if "index" in h}
+    ports: list[PortSummary] = []
+    for hub in hubs:
+        for p in hub.get("ports", []):
+            ex = _decoded(p, "connection_information_ex")
+            v2 = _decoded(p, "connection_information_ex_v2")
+            comp = companion(by_index, p)
+            rec = {
+                "hub_index": hub["index"],
+                "port": p["port"],
+                "port_supported_usb_protocols": v2.get("SupportedUsbProtocols"),
+                "companion": comp,
+                "port_properties": _decoded(p, "port_connector_properties").get(
+                    "UsbPortProperties"
+                ),
+            }
+            props = (rec["port_properties"] or {}).get("bits") or {}
+            ports.append(
+                PortSummary(
+                    hub_index=hub["index"],
+                    port=p["port"],
+                    kind=port_kind(rec),
+                    connector=connector_type(rec),
+                    capability=port_capability(rec),
+                    companion_port=comp["port"] if comp else None,
+                    user_connectable=bool(props.get("PortIsUserConnectable")),
+                    connection_status=ex.get("ConnectionStatus_name") or "不明",
+                    connected=bool(ex.get("ConnectionStatus", 0)),
+                )
+            )
+    return ports
 
 
 def diagnose_device(dump: dict[str, Any], rec: dict[str, Any]) -> Diagnosis:
@@ -273,9 +390,13 @@ def diagnose_device(dump: dict[str, Any], rec: dict[str, Any]) -> Diagnosis:
         port_name=port_name(rec),
         device_name=device_name(rec),
         hubs=hub_elements(dump, rec),
+        connector_type=connector_type(rec),
     )
     diagnosis.vid = rec.get("vid")
     diagnosis.pid = rec.get("pid")
+    port_element = diagnosis.element("port")
+    if port_element is not None:
+        port_element.detail = port_detail(rec)
     return diagnosis
 
 
@@ -303,6 +424,9 @@ class WindowsPlatform(UsbPlatform):
 
     def diagnose(self, device: DeviceSummary) -> Diagnosis:
         return diagnose_device(self.dump, device.raw)
+
+    def ports(self) -> list[PortSummary]:
+        return describe_ports(self.dump)
 
 
 class _SilentRecorder:  # pragma: no cover - 実機 (Windows) でのみ動作

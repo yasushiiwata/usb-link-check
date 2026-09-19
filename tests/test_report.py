@@ -11,7 +11,13 @@ from usb_link_check.cli import build_parser, main, run
 from usb_link_check.diagnosis import diagnose
 from usb_link_check.models import Capability, LinkSpeed
 from usb_link_check.platforms.windows import WindowsPlatform
-from usb_link_check.report import render_device_list, render_text, to_json_dict
+from usb_link_check.report import (
+    render_device_list,
+    render_port_list,
+    render_text,
+    to_json_dict,
+    wrap_japanese,
+)
 
 RAW = Path(__file__).parent / "fixtures" / "raw"
 TARGET = (0x346D, 0x5678)
@@ -89,6 +95,49 @@ def test_text_shows_unknown_without_inventing_numbers() -> None:
     assert "到達しうる最高速: 不明" in text
 
 
+def test_text_label_is_the_configuration_specific_maximum() -> None:
+    """改善提案と矛盾して見えないラベルにする（SPEC.md 6.1）。"""
+    text = render_text(diagnosis_for("windows_usb2"))
+    assert "現構成で到達しうる最高速:" in text
+
+
+def test_text_shows_port_in_human_and_internal_form() -> None:
+    text = render_text(diagnosis_for("windows_usb2"))
+    assert "ポート7（USB3コネクタ / Type-A / コンパニオン: ポート24）" in text
+    assert "Port_#0007.Hub_#0001" in text  # UsbTreeView との照合用に残す
+
+
+def test_text_shows_connector_type_and_emarker() -> None:
+    text = render_text(diagnosis_for("windows_usb2"))
+    assert "Type-A" in text  # 開発機のポートはすべて Type-A
+    emarker_line = next(line for line in text.splitlines() if line.strip().startswith("eMarker"))
+    assert "なし" in emarker_line
+    assert "Type-A" in emarker_line
+    assert "確度: likely" in emarker_line
+
+
+@pytest.mark.parametrize("width", [60, 76, 100])
+def test_japanese_text_is_wrapped_by_display_width(width: int) -> None:
+    """単語の途中ではなく表示幅で折り返す（SPEC.md 6.1）。"""
+    text = render_text(diagnosis_for("windows_usb2"), width=width)
+    for line in text.splitlines():
+        assert _display_width(line) <= width + 2  # 罫線などの誤差を許容
+    # 提案文が空白で不自然に切れていないこと
+    assert "より 高速な" not in text
+
+
+def _display_width(text: str) -> int:
+    import unicodedata
+
+    return sum(2 if unicodedata.east_asian_width(c) in "WF" else 1 for c in text)
+
+
+def test_wrap_japanese_does_not_start_a_line_with_punctuation() -> None:
+    lines = wrap_japanese("あいうえお、かきくけこ。さしすせそ", 12)
+    assert all(not line.startswith(("、", "。")) for line in lines)
+    assert "".join(lines) == "あいうえお、かきくけこ。さしすせそ"
+
+
 def test_text_of_optimal_has_no_suggestions() -> None:
     text = render_text(diagnosis_for("windows_fast"))
     assert "改善提案" not in text
@@ -163,3 +212,67 @@ def test_device_list_rendering_marks_unknown_speed() -> None:
     text = render_device_list(platform.devices())
     assert "5 Gbps" in text
     assert "480 Mbps" in text
+
+
+# ---------------------------------------------------------------- --list の表示
+
+
+def test_device_list_shows_l_p_d_for_each_device() -> None:
+    text = render_device_list(platform_for("windows_usb2").devices())
+    header = text.splitlines()[0]
+    assert "L(実効)" in header and "P(ポート)" in header and "D(デバイス)" in header
+    ssd = next(line for line in text.splitlines() if line.strip().startswith("⚠"))
+    assert "346D:5678" in ssd
+    assert "480 Mbps" in ssd  # L
+    assert "5 Gbps+" in ssd  # P は AT_LEAST
+    assert "5 Gbps" in ssd  # D
+
+
+def test_device_list_warns_only_on_underperforming_devices() -> None:
+    """L < min(P, D) の行だけに ⚠ を付ける（SPEC.md 6.1.1）。"""
+    usb2 = platform_for("windows_usb2").devices()
+    marked = [d.vid_pid for d in usb2 if d.is_underperforming]
+    assert marked == ["346D:5678"]
+    text = render_device_list(usb2)
+    assert "⚠ = 能力より遅くリンクしています" in text
+
+
+def test_device_list_has_no_warning_when_optimal() -> None:
+    fast = platform_for("windows_fast").devices()
+    storage = next(d for d in fast if d.is_mass_storage)
+    assert storage.is_underperforming is False
+    assert "⚠" not in render_device_list(fast)
+
+
+def test_port_list_shows_empty_ports_and_their_kind() -> None:
+    """--list --all で空きポートも正体が分かること（SPEC.md 6.1.1）。"""
+    ports = platform_for("windows_fast").ports()
+    assert len(ports) == 26  # ルートハブの全ポート
+    empty = [p for p in ports if not p.connected]
+    assert empty  # 空きポートが含まれる
+    text = render_port_list(ports)
+    assert "USB3コネクタ" in text
+    assert "USB2専用" in text
+    assert "Type-A" in text
+    assert "NoDeviceConnected" in text
+    # コンパニオンの対応も分かる
+    port5 = next(p for p in ports if p.port == 5)
+    assert port5.companion_port == 25
+    assert port5.kind == "USB3コネクタ"
+    port8 = next(p for p in ports if p.port == 8)
+    assert port8.companion_port is None
+    assert port8.kind == "USB2専用"
+
+
+def test_cli_all_prints_port_inventory() -> None:
+    code, out = run_cli(["--list", "--all"], "windows_fast")
+    assert code == 0
+    assert "すべてのポート:" in out
+    assert "コンパニオン" in out
+
+
+def test_cli_all_without_list_is_reported() -> None:
+    parsed = build_parser().parse_args(["--all", "--json"])
+    out, err = io.StringIO(), io.StringIO()
+    run(parsed, platform_for("windows_fast"), out=out, err=err)
+    assert "--list と併用" in err.getvalue()

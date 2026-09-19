@@ -14,11 +14,15 @@ from usb_link_check.models import Capability, Confidence, LinkSpeed
 from usb_link_check.platforms.windows import (
     WindowsPlatform,
     companion_pairs,
+    connector_type,
     describe_devices,
     device_capability,
+    device_name,
     find_devices,
     link_speed,
     port_capability,
+    port_detail,
+    port_name,
 )
 
 RAW = Path(__file__).parent / "fixtures" / "raw"
@@ -216,6 +220,84 @@ def test_port11_ss_fail_is_a1_with_port_wiring_hint() -> None:
     assert d.rule == "A1"
     action = d.suggestions[0].action
     assert "直挿し" in action and "SuperSpeed 配線" in action
+
+
+# ---------------------------------------------------------------- 表示用の値
+
+
+def test_device_name_falls_back_when_no_name_is_available() -> None:
+    """既存フィクスチャには文字列ディスクリプタ・子デバイスが無いので末尾まで下がる。"""
+    assert device_name(target_record("windows_fast")) == "USB Device"
+
+
+@pytest.mark.parametrize(
+    ("rec", "expected"),
+    [
+        # 1. FriendlyName が最優先
+        ({"friendly_name": "My Drive", "service": "USBSTOR", "child_names": ["Child"]}, "My Drive"),
+        # 2. マスストレージは子デバイス（USBSTOR 側に製品名が入る）
+        (
+            {
+                "service": "USBSTOR",
+                "child_names": ["Acer USB Flash Drive USB Device"],
+                "manufacturer": "Acer",
+                "product": "USB Device",
+            },
+            "Acer USB Flash Drive USB Device",
+        ),
+        # 3. マスストレージ以外は文字列ディスクリプタを子より優先する
+        (
+            {
+                "service": "usbccgp",
+                "child_names": ["Bluetooth Device (Personal Area Network)"],
+                "manufacturer": "AICSemi",
+                "product": "AIC 8800D80",
+            },
+            "AICSemi AIC 8800D80",
+        ),
+        # 製造者名が製品名の接頭辞になっている場合は重ねない
+        ({"manufacturer": "Acer", "product": "Acer Flash"}, "Acer Flash"),
+        # 4 / 5. 文字列が無ければ BusReported → DeviceDesc
+        ({"bus_reported_description": "USB Device", "description": "記憶装置"}, "USB Device"),
+        ({"description": "USB 大容量記憶装置"}, "USB 大容量記憶装置"),
+        # 6. 何も無ければ VID:PID
+        ({"vid": 0x346D, "pid": 0x5678}, "346D:5678"),
+    ],
+)
+def test_device_name_resolution_order(rec: dict[str, Any], expected: str) -> None:
+    """SPEC.md 4.2 補助の解決順。"""
+    assert device_name(rec) == expected
+
+
+def test_connector_type_is_type_a_on_this_hardware() -> None:
+    """要実機検証: Type-C ポートを持つ機体では type_c になるはず（開発機は全て Type-A）。"""
+    assert connector_type(target_record("windows_fast")) == "type_a"
+
+
+@pytest.mark.parametrize(
+    ("bits", "expected"),
+    [
+        ({"PortConnectorIsTypeC": True}, "type_c"),
+        ({"PortConnectorIsTypeC": False}, "type_a"),
+        ({}, "unknown"),
+    ],
+)
+def test_connector_type_reads_bit3(bits: dict[str, bool], expected: str) -> None:
+    assert connector_type({"port_properties": {"bits": bits}}) == expected
+    assert connector_type({}) == "unknown"
+
+
+def test_port_name_and_detail() -> None:
+    rec = target_record("windows_usb2")
+    assert port_name(rec) == "ポート7（USB3コネクタ / Type-A / コンパニオン: ポート24）"
+    assert port_detail(rec) == "Port_#0007.Hub_#0001"
+
+
+def test_emarker_on_real_hardware_is_absent_because_ports_are_type_a() -> None:
+    d = diagnose("windows_usb2")
+    assert d.connector_type == "type_a"
+    assert d.emarker is not None
+    assert (d.emarker.state, d.emarker.certainty) == ("absent", "likely")
 
 
 # ---------------------------------------------------------------- デバイス列挙

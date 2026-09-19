@@ -10,7 +10,9 @@ from .models import (
     Capability,
     ChainElement,
     Confidence,
+    ConnectorType,
     Diagnosis,
+    EMarker,
     LinkSpeed,
     Suggestion,
     Verdict,
@@ -35,6 +37,33 @@ SPLIT_TEST_ACTION_CABLE_OR_PORT = (
 )
 
 
+def estimate_emarker(connector: ConnectorType, link_speed: LinkSpeed | None) -> EMarker:
+    """eMarker 搭載の有無を推定する（SPEC.md 5.4）。
+
+    直接読む手段が無いため必ず推定であり、断定しない。
+    要実機検証: Type-C ポートを持つ機体で確認していない（開発機は全ポート Type-A）。
+    """
+    if connector == "type_a":
+        # A-to-C / A-to-A ケーブルに eMarker は搭載されない
+        return EMarker("absent", "likely", "ポートが Type-A のため")
+    if connector == "type_c":
+        if link_speed is not None and link_speed >= LinkSpeed.SUPER_SPEED:
+            return EMarker(
+                "likely_present",
+                "likely",
+                "Type-C ポートで 5Gbps 以上でリンクしているため、"
+                "USB Type-C 仕様上 eMarker 搭載が必須のケーブルに該当",
+            )
+        # USB 2.0 のみの C-to-C は eMarker が任意。変換ケーブルの可能性もある
+        return EMarker(
+            "unknown",
+            "unknown",
+            "Type-C ポートだが 480Mbps 以下でリンクしており、"
+            "USB 2.0 のみの C-to-C か変換ケーブルかを区別できないため",
+        )
+    return EMarker("unknown", "unknown", "ポートのコネクタ形状が不明なため")
+
+
 def diagnose(
     link_speed: LinkSpeed | None,
     port: Capability,
@@ -44,12 +73,37 @@ def diagnose(
     device_name: str = "デバイス",
     hubs: list[ChainElement] | None = None,
     detected: bool = True,
+    connector_type: ConnectorType = "unknown",
 ) -> Diagnosis:
     """L / P / D から判定を行う（SPEC.md 5章）。
 
     port / device が UNKNOWN の場合も推測で埋めず、判定不能として返す。
     hubs には経路上の外部ハブを上流から順に渡す（SPEC.md 5.3）。
     """
+    result = _diagnose_core(
+        link_speed,
+        port,
+        device,
+        port_name=port_name,
+        device_name=device_name,
+        hubs=hubs,
+        detected=detected,
+    )
+    result.connector_type = connector_type
+    result.emarker = estimate_emarker(connector_type, link_speed)
+    return result
+
+
+def _diagnose_core(
+    link_speed: LinkSpeed | None,
+    port: Capability,
+    device: Capability,
+    *,
+    port_name: str,
+    device_name: str,
+    hubs: list[ChainElement] | None,
+    detected: bool,
+) -> Diagnosis:
     hubs = hubs or []
     if not detected:
         return Diagnosis(

@@ -78,6 +78,7 @@ def _usb_ctl(function: int) -> int:
 
 # 関数番号は usbiodef.h より。要実機検証。
 IOCTL_USB_GET_NODE_INFORMATION = _usb_ctl(258)  # 0x220408
+IOCTL_USB_GET_DESCRIPTOR_FROM_NODE_CONNECTION = _usb_ctl(260)  # 0x220410
 IOCTL_USB_GET_NODE_CONNECTION_NAME = _usb_ctl(261)  # 0x220414
 IOCTL_USB_GET_NODE_CONNECTION_DRIVERKEY_NAME = _usb_ctl(264)  # 0x220420
 IOCTL_USB_GET_NODE_CONNECTION_INFORMATION_EX = _usb_ctl(274)  # 0x220448
@@ -101,6 +102,12 @@ PORT_CONNECTOR_FIXED_SIZE = 16  # WCHAR 名前の直前まで
 PORT_CONNECTOR_STRUCT_SIZE = 18  # sizeof（WCHAR[1] を含む）
 NAME_HEADER_SIZE = 8  # ConnectionIndex(4) + ActualLength(4)
 NAME_STRUCT_SIZE = 10  # sizeof（WCHAR[1] を含む）
+# USB_DESCRIPTOR_REQUEST: ConnectionIndex(4) + SetupPacket(8) + Data[]
+DESCRIPTOR_REQUEST_HEADER_SIZE = 12
+STRING_DESCRIPTOR_MAX = 255  # bLength は 1 バイト
+USB_REQUEST_GET_DESCRIPTOR = 0x06
+USB_STRING_DESCRIPTOR_TYPE = 0x03
+DEFAULT_LANGID = 0x0409  # en-US。index 0 から取得できた最初の LANGID を優先する
 
 # USB_DEVICE_SPEED (usbspec.h)。
 # 実機ダンプで確定 (SPEC.md 4.2): SuperSpeed で動作中でも 2 (UsbHighSpeed) が返る。
@@ -332,6 +339,41 @@ def decode_port_connector_properties(raw: bytes) -> dict[str, Any]:
     }
 
 
+def build_descriptor_request(
+    port: int, desc_type: int, index: int, langid: int, length: int
+) -> bytes:
+    """USB_DESCRIPTOR_REQUEST（ConnectionIndex + SetupPacket）を組み立てる。"""
+    setup = struct.pack(
+        "<BBHHH",
+        0x80,  # bmRequest: Device-to-host, Standard, Device
+        USB_REQUEST_GET_DESCRIPTOR,
+        (desc_type << 8) | index,
+        langid,
+        length,
+    )
+    return struct.pack("<I", port) + setup + bytes(length)
+
+
+def decode_string_descriptor(raw: bytes) -> dict[str, Any]:
+    """USB_DESCRIPTOR_REQUEST の応答から USB_STRING_DESCRIPTOR を取り出す。
+
+    index 0 の応答は文字列ではなく LANGID の配列である。
+    """
+    _require(raw, DESCRIPTOR_REQUEST_HEADER_SIZE + 2, "USB_DESCRIPTOR_REQUEST")
+    data = raw[DESCRIPTOR_REQUEST_HEADER_SIZE:]
+    b_length, b_type = data[0], data[1]
+    payload = data[2 : max(b_length, 2)]
+    return {
+        "bLength": b_length,
+        "bDescriptorType": b_type,
+        # 文字列は解釈済みの値だけを残す（hex に入れるとサニタイズで検出できないため）
+        "string": payload.decode("utf-16-le", errors="replace").rstrip("\x00"),
+        "langids": [
+            int.from_bytes(payload[i : i + 2], "little") for i in range(0, len(payload) - 1, 2)
+        ],
+    }
+
+
 def decode_name_struct(raw: bytes) -> dict[str, Any]:
     """USB_NODE_CONNECTION_DRIVERKEY_NAME / USB_NODE_CONNECTION_NAME（同形式）。"""
     _require(raw, NAME_HEADER_SIZE, "USB_NODE_CONNECTION_*_NAME")
@@ -400,6 +442,9 @@ SPDRP_FRIENDLYNAME = 0x0C
 SPDRP_LOCATION_INFORMATION = 0x0D
 SPDRP_LOCATION_PATHS = 0x23
 REG_MULTI_SZ = 7
+# CM_DRP_* は SPDRP_* + 1（cfgmgr32.h）
+CM_DRP_DEVICEDESC = SPDRP_DEVICEDESC + 1
+CM_DRP_FRIENDLYNAME = SPDRP_FRIENDLYNAME + 1
 DEVPROP_TYPE_STRING = 0x12
 ERROR_ACCESS_DENIED = 5
 ERROR_INSUFFICIENT_BUFFER = 122
@@ -458,6 +503,14 @@ class _WinApi:  # pragma: no cover - 実機 (Windows) でのみ動作
 
         cm.CM_Get_Parent.argtypes = [p(_DWORD), _DWORD, ctypes.c_ulong]
         cm.CM_Get_Parent.restype = ctypes.c_uint32
+        cm.CM_Get_Child.argtypes = [p(_DWORD), _DWORD, ctypes.c_ulong]
+        cm.CM_Get_Child.restype = ctypes.c_uint32
+        cm.CM_Get_Sibling.argtypes = [p(_DWORD), _DWORD, ctypes.c_ulong]
+        cm.CM_Get_Sibling.restype = ctypes.c_uint32
+        cm.CM_Get_DevNode_Registry_PropertyW.argtypes = [
+            _DWORD, ctypes.c_ulong, p(ctypes.c_ulong), vp, p(ctypes.c_ulong), ctypes.c_ulong
+        ]  # fmt: skip
+        cm.CM_Get_DevNode_Registry_PropertyW.restype = ctypes.c_uint32
         cm.CM_Get_Device_IDW.argtypes = [_DWORD, ctypes.c_wchar_p, ctypes.c_ulong, ctypes.c_ulong]
         cm.CM_Get_Device_IDW.restype = ctypes.c_uint32
 
@@ -522,6 +575,41 @@ class _WinApi:  # pragma: no cover - 実機 (Windows) でのみ動作
             return None
         return self._instance_id(parent.value)
 
+    def _devnode_string(self, devinst: int, prop: int) -> str | None:
+        """CM_Get_DevNode_Registry_PropertyW で文字列プロパティを読む。"""
+        size = ctypes.c_ulong(1024)
+        buf = ctypes.create_string_buffer(size.value)
+        regtype = ctypes.c_ulong(0)
+        ret = self.cfgmgr32.CM_Get_DevNode_Registry_PropertyW(
+            devinst, prop, ctypes.byref(regtype), buf, ctypes.byref(size), 0
+        )
+        if ret != 0:
+            return None
+        return _decode_utf16z(buf.raw[: size.value]) or None
+
+    def _children(self, devinst: int, depth: int = 2) -> list[dict[str, Any]]:
+        """子デバイスの名前を集める（USB マスストレージの製品名は子側に入る）。"""
+        children: list[dict[str, Any]] = []
+        if depth <= 0:
+            return children
+        child = _DWORD(0)
+        if self.cfgmgr32.CM_Get_Child(ctypes.byref(child), devinst, 0) != 0:
+            return children
+        while True:
+            children.append(
+                {
+                    "instance_id": self._instance_id(child.value),
+                    "friendly_name": self._devnode_string(child.value, CM_DRP_FRIENDLYNAME),
+                    "description": self._devnode_string(child.value, CM_DRP_DEVICEDESC),
+                    "children": self._children(child.value, depth - 1),
+                }
+            )
+            sibling = _DWORD(0)
+            if self.cfgmgr32.CM_Get_Sibling(ctypes.byref(sibling), child.value, 0) != 0:
+                break
+            child = sibling
+        return children
+
     def _device_props(self, hdev: int, devinfo: _SP_DEVINFO_DATA) -> dict[str, Any]:
         return {
             "instance_id": self._instance_id(devinfo.DevInst),
@@ -537,6 +625,7 @@ class _WinApi:  # pragma: no cover - 実機 (Windows) でのみ動作
                 hdev, devinfo, SPDRP_LOCATION_INFORMATION
             ),
             "location_paths": self._registry_property(hdev, devinfo, SPDRP_LOCATION_PATHS),
+            "children": self._children(devinfo.DevInst),
         }
 
     def enum_interfaces(self, guid_str: str) -> list[dict[str, Any]]:
@@ -715,6 +804,47 @@ def _ioctl_two_step(  # pragma: no cover - 実機 (Windows) でのみ動作
     )  # fmt: skip
 
 
+def _string_descriptor(  # pragma: no cover - 実機 (Windows) でのみ動作
+    api: _WinApi, handle: int, port: int, index: int, langid: int
+) -> dict[str, Any]:
+    return _ioctl_record(
+        api, handle, "IOCTL_USB_GET_DESCRIPTOR_FROM_NODE_CONNECTION (string)",
+        IOCTL_USB_GET_DESCRIPTOR_FROM_NODE_CONNECTION,
+        build_descriptor_request(
+            port, USB_STRING_DESCRIPTOR_TYPE, index, langid, STRING_DESCRIPTOR_MAX
+        ),
+        DESCRIPTOR_REQUEST_HEADER_SIZE + STRING_DESCRIPTOR_MAX,
+        decode_string_descriptor,
+        raw_limit=DESCRIPTOR_REQUEST_HEADER_SIZE,
+    )  # fmt: skip
+
+
+def _collect_strings(  # pragma: no cover - 実機 (Windows) でのみ動作
+    api: _WinApi, handle: int, port: int, descriptor: dict[str, Any]
+) -> dict[str, Any]:
+    """製造者名・製品名の文字列ディスクリプタを取得する（表示用。SPEC.md 4.2 補助）。
+
+    **iSerialNumber は意図的に要求しない**（機器の資産情報をダンプに残さないため。
+    CLAUDE.md 必須ルール 3）。
+    """
+    result: dict[str, Any] = {}
+    langid_rec = _string_descriptor(api, handle, port, 0, 0)
+    langids = ((langid_rec.get("decoded") or {}).get("langids") or []) if langid_rec["ok"] else []
+    langid = langids[0] if langids else DEFAULT_LANGID
+    result["langid"] = f"0x{langid:04X}"
+    result["langids_available"] = [f"0x{v:04X}" for v in langids]
+    for field in ("iManufacturer", "iProduct"):
+        index = descriptor.get(field) or 0
+        if not index:
+            continue
+        rec = _string_descriptor(api, handle, port, index, langid)
+        if rec["ok"]:
+            result[field] = (rec.get("decoded") or {}).get("string")
+        else:
+            result[f"{field}_error"] = rec.get("win32_error_message")
+    return result
+
+
 def _collect_port(  # pragma: no cover - 実機 (Windows) でのみ動作
     api: _WinApi, handle: int, port: int, usb_devices: dict[str, dict[str, Any]]
 ) -> dict[str, Any]:
@@ -750,6 +880,7 @@ def _collect_port(  # pragma: no cover - 実機 (Windows) でのみ動作
         rec["driver_key_name"] = dk
         key = ((dk.get("decoded") or {}).get("Name") or "").lower()
         rec["device"] = usb_devices.get(key) if key else None
+        rec["strings"] = _collect_strings(api, handle, port, decoded.get("DeviceDescriptor") or {})
     if decoded.get("DeviceIsHub"):
         rec["node_connection_name"] = _ioctl_two_step(
             api, handle, "IOCTL_USB_GET_NODE_CONNECTION_NAME",

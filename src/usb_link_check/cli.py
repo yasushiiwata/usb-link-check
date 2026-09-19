@@ -11,7 +11,7 @@ from typing import Any
 from . import __version__
 from .models import EXIT_ERROR, Capability, Diagnosis
 from .platforms.base import UsbPlatform
-from .report import print_report, render_device_list, to_json
+from .report import print_report, render_device_list, render_port_list, to_json
 
 _LINUX_MESSAGE = "ERROR: このツールは macOS と Windows のみ対応しています"
 _MACOS_MESSAGE = (
@@ -33,6 +33,12 @@ def build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument(
         "--list", action="store_true", help="検出した USB デバイスを全件一覧表示して終了"
+    )
+    parser.add_argument(
+        "--all",
+        action="store_true",
+        help="--list と併用。デバイスが接続されていないポートも一覧し、"
+        "その穴が USB3 コネクタか USB2 専用かを表示する",
     )
     parser.add_argument("--json", action="store_true", help="結果を JSON で出力")
     parser.add_argument(
@@ -66,7 +72,13 @@ def run(
 
     if args.list:
         print(render_device_list(usb.devices()), file=out)
+        if args.all:
+            print("", file=out)
+            print("すべてのポート:", file=out)
+            print(render_port_list(usb.ports()), file=out)
         return 0
+    if args.all:
+        print("注意: --all は --list と併用したときのみ有効です。", file=err)
 
     candidates = usb.select(args.device)
     if not candidates:
