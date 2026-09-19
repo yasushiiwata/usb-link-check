@@ -31,3 +31,5 @@ coverage.xml
 .idea/
 .DS_Store
 Thumbs.db
+
+tools/UsbTreeView.exe
