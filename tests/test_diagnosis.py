@@ -25,6 +25,17 @@ def test_a1_cable_is_bottleneck_when_link_below_port_and_device() -> None:
     assert d.achievable_max == Capability.exact(SS)
 
 
+def test_a1_achievable_max_is_exact_when_the_device_caps_it() -> None:
+    """P ≥ 5Gbps かつ D = 5Gbps（EXACT）なら、到達しうる最高速は 5Gbps で確定する。"""
+    d = diagnose(HIGH, Capability.at_least(SS), Capability.exact(SS))
+    assert d.achievable_max == Capability.exact(SS)
+
+
+def test_a1_achievable_max_stays_at_least_when_both_bounds_are_open() -> None:
+    d = diagnose(HIGH, Capability.at_least(SS), Capability.at_least(SSP))
+    assert d.achievable_max == Capability.at_least(SS)
+
+
 def test_a1_suggestion_mentions_both_cable_and_port_wiring() -> None:
     """直挿しでも P の過大評価で A1 になりうるため断定しない（SPEC.md 4.2 既知の限界）。"""
     d = diagnose(HIGH, Capability.at_least(SS), Capability.exact(SS))

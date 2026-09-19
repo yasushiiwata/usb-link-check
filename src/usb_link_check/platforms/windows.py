@@ -212,7 +212,11 @@ def port_name(rec: dict[str, Any]) -> str:
 
 
 def hub_elements(dump: dict[str, Any], rec: dict[str, Any]) -> list[ChainElement]:
-    """経路上の外部ハブを上流から順に返す（ルートハブはポートとして扱うので除く）。"""
+    """経路上の外部ハブを上流から順に返す（ルートハブはポートとして扱うので除く）。
+
+    TODO: 実機ダンプ待ち（外部ハブ経由の構成）。現在のフィクスチャ 4 件はいずれも
+    ルートハブ直結のため、この関数は実機データで検証できていない（SPEC.md 5.3）。
+    """
     by_index = {h["index"]: h for h in dump.get("hubs", []) if "index" in h}
     elements: list[ChainElement] = []
     path = rec.get("path_from_root") or []

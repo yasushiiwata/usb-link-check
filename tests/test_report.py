@@ -7,7 +7,7 @@ from typing import Any
 
 import pytest
 
-from usb_link_check.cli import build_parser, run
+from usb_link_check.cli import build_parser, main, run
 from usb_link_check.diagnosis import diagnose
 from usb_link_check.models import Capability, LinkSpeed
 from usb_link_check.platforms.windows import WindowsPlatform
@@ -43,7 +43,8 @@ def test_json_matches_spec_schema() -> None:
     assert payload["device"] == {"name": "USB Device", "vid": "0x346d", "pid": "0x5678"}
     assert payload["link_speed_mbps"] == 480
     assert payload["achievable_max_mbps"] == 5000
-    assert payload["achievable_max_confidence"] == "at_least"
+    # P ≥ 5Gbps かつ D = 5Gbps（EXACT）なので天井は 5Gbps で確定する
+    assert payload["achievable_max_confidence"] == "exact"
     assert payload["verdict"] == "IMPROVABLE"
     kinds = [e["kind"] for e in payload["chain"]]
     assert kinds == ["port", "cable", "device"]
@@ -144,6 +145,17 @@ def test_help_lists_every_documented_option(capsys: Any) -> None:
     help_text = capsys.readouterr().out
     for option in ("--device", "--list", "--json", "--debug", "--version", "--help"):
         assert option in help_text
+
+
+@pytest.mark.parametrize(
+    ("system", "message"), [("Linux", "macOS と Windows"), ("Darwin", "未実装")]
+)
+def test_unsupported_os_exits_with_code_4(
+    monkeypatch: pytest.MonkeyPatch, capsys: Any, system: str, message: str
+) -> None:
+    monkeypatch.setattr("usb_link_check.cli.platform.system", lambda: system)
+    assert main([]) == 4
+    assert message in capsys.readouterr().err
 
 
 def test_device_list_rendering_marks_unknown_speed() -> None:

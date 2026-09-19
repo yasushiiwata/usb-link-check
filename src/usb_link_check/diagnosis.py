@@ -278,15 +278,20 @@ def _undetermined(
 
 
 def _capability_min(a: Capability, b: Capability) -> Capability:
-    """min(a, b)。片方が不明なら不明。確度は低い方（AT_LEAST）に寄せる。"""
+    """min(a, b)。片方が不明なら不明。
+
+    EXACT な側が最小値と一致するなら結果も EXACT。
+    例: P ≥ 5Gbps かつ D = 5Gbps（EXACT）なら min は 5Gbps で確定する
+    （P は 5Gbps 以上なので、天井は D の 5Gbps に決まる）。
+    それ以外は AT_LEAST（例: P ≥ 5Gbps かつ D = 10Gbps なら min は 5Gbps 以上）。
+    """
     if not a.is_known or not b.is_known or a.speed is None or b.speed is None:
         return Capability.unknown()
-    speed = min(a.speed, b.speed)
-    # 採用した側が AT_LEAST なら結果も AT_LEAST。EXACT な側が小さければ EXACT。
-    chosen = a if a.speed <= b.speed else b
-    if chosen.confidence is Confidence.EXACT:
-        return Capability.exact(LinkSpeed(speed))
-    return Capability.at_least(LinkSpeed(speed))
+    speed = LinkSpeed(min(a.speed, b.speed))
+    for cap in (a, b):
+        if cap.confidence is Confidence.EXACT and cap.speed == speed:
+            return Capability.exact(speed)
+    return Capability.at_least(speed)
 
 
 def _build(

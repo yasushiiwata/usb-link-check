@@ -6,6 +6,7 @@ build-backend = "hatchling.build"
 name = "usb_link_check"
 version = "0.1.0"
 description = "USB 接続のポート / ケーブル / デバイスの能力を推論し、ボトルネックを特定する CLI ツール"
+readme = "README.md"
 license = { text = "MIT" }
 requires-python = ">=3.10"
 dependencies = [
@@ -48,3 +49,8 @@ select = ["E", "F", "W", "I", "UP", "B"]
 
 [tool.coverage.run]
 source = ["usb_link_check"]
+
+[tool.coverage.report]
+# 実行層（IOCTL / 外部コマンド）は除外する。全体カバレッジ率を目標にしない（CLAUDE.md）
+omit = ["*/platforms/win32_raw.py"]
+exclude_lines = ["pragma: no cover", "if TYPE_CHECKING:"]

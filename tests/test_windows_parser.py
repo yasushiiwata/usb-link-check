@@ -127,6 +127,45 @@ def a_full_speed_record() -> dict:
     return rec
 
 
+# ------------------------------------- 実機データに無い分岐（10Gbps 機器・未知の値）
+#
+# 以下は自前の出力スキーマ上の分岐を確認するもの。ビット割り当て自体は未検証であり
+# （SPEC.md 4.2: 10Gbps デバイス未入手）、10Gbps 機器のダンプが採取できたら差し替える。
+
+
+def _flags(**bits: bool) -> dict[str, Any]:
+    names = (
+        "DeviceIsOperatingAtSuperSpeedOrHigher",
+        "DeviceIsSuperSpeedCapableOrHigher",
+        "DeviceIsOperatingAtSuperSpeedPlusOrHigher",
+        "DeviceIsSuperSpeedPlusCapableOrHigher",
+    )
+    return {"v2_flags": {"bits": {n: bits.get(n, False) for n in names}}}
+
+
+def test_link_speed_of_superspeed_plus_is_10gbps() -> None:
+    rec = {"speed": 2, **_flags(DeviceIsOperatingAtSuperSpeedPlusOrHigher=True)}
+    assert link_speed(rec) is LinkSpeed.SUPER_SPEED_PLUS
+
+
+def test_device_capability_of_superspeed_plus_capable_is_at_least_10gbps() -> None:
+    rec = {"speed": 2, **_flags(DeviceIsSuperSpeedPlusCapableOrHigher=True)}
+    cap = device_capability(rec, link_speed(rec))
+    assert cap == Capability.at_least(LinkSpeed.SUPER_SPEED_PLUS)
+
+
+def test_unknown_ex_speed_value_is_not_guessed() -> None:
+    """未知の値に遭遇しても例外で落とさず、推測もしない（SPEC.md 8章）。"""
+    rec = {"speed": 7, **_flags()}
+    assert link_speed(rec) is None
+    assert device_capability(rec, None) == Capability.unknown()
+
+
+def test_port_capability_is_unknown_when_no_usable_protocol_bit() -> None:
+    rec: dict[str, Any] = {"port_supported_usb_protocols": {"value": 0b001}, "companion": None}
+    assert port_capability(rec) == Capability.unknown()
+
+
 # ---------------------------------------------------------------- 判定（中核）
 
 
