@@ -11,8 +11,11 @@ from collect_dump import (
     USB_PROTOCOL_BITS,
     V2_FLAG_BITS,
     companion_pairs,
+    describe_windows_devices,
     expand_bits,
     find_windows_target,
+    format_windows_device_list,
+    main,
     parse_device_spec,
     validate_label,
 )
@@ -126,6 +129,23 @@ def test_find_windows_target_follows_downstream_hub() -> None:
 
 def test_find_windows_target_not_found() -> None:
     assert find_windows_target(_dump(), 0xFFFF, 0xFFFF) == []
+
+
+def test_format_windows_device_list_shows_hub_port_and_companion() -> None:
+    lines = format_windows_device_list(describe_windows_devices(_dump()))
+    ssd = next(line for line in lines if line.startswith("0781:5591"))
+    assert "ハブ0/ポート5" in ssd
+    assert "あり(ハブ0/ポート25)" in ssd
+    other = next(line for line in lines if line.startswith("1234:0001"))
+    assert "ハブ1/ポート2" in other
+    assert "なし" in other
+    hub = next(line for line in lines if line.startswith("05E3:0626"))
+    assert "[ハブ]" not in hub  # DeviceIsHub は未設定
+
+
+def test_list_and_device_are_mutually_exclusive() -> None:
+    with pytest.raises(SystemExit):
+        main(["--list", "--device", "0781:5591"])
 
 
 def test_companion_pairs() -> None:

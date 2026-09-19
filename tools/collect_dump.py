@@ -2,6 +2,7 @@
 """実機ダンプ採取スクリプト（Python 標準ライブラリのみ・追加インストール不要）。
 
 使い方:
+    python tools/collect_dump.py --list        # 接続中の USB デバイスと VID:PID を一覧表示
     python tools/collect_dump.py --label macos_ssd_fast --device 0781:5591
     python tools/collect_dump.py --label windows_fast --device 0781:5591
 
@@ -44,6 +45,7 @@ import struct
 import subprocess
 import sys
 import traceback
+import unicodedata
 import uuid
 from collections.abc import Callable
 from pathlib import Path
@@ -100,9 +102,12 @@ def expand_bits(value: int, names: dict[int, str]) -> dict[str, Any]:
 class Context:
     """採取 1 回分の状態（保存ファイル・成否・警告）を保持する。"""
 
-    def __init__(self, label: str, out_dir: Path, vid: int, pid: int) -> None:
+    def __init__(
+        self, label: str, out_dir: Path, vid: int, pid: int, *, quiet: bool = False
+    ) -> None:
         self.label = label
         self.out_dir = out_dir
+        self.quiet = quiet  # --list 用: 成功した項目の進捗表示を省く
         self.vid = vid
         self.pid = pid
         # 対象デバイスの接続位置（P の判定根拠）。meta と要約に必ず出す。
@@ -125,11 +130,17 @@ class Context:
 
     def record(self, name: str, ok: bool, **info: Any) -> None:
         self.items.append({"name": name, "status": "ok" if ok else "failed", **info})
+        if ok and self.quiet:
+            return
         mark = "[OK]  " if ok else "[失敗]"
         detail = f" -> {info['file']}" if ok and "file" in info else ""
         if not ok and info.get("error"):
             detail = f": {info['error']}"
         print(f"  {mark} {name}{detail}")
+
+    def info(self, message: str) -> None:
+        if not self.quiet:
+            print(message)
 
     def warn(self, message: str) -> None:
         self.warnings.append(message)
@@ -321,6 +332,91 @@ def find_macos_target(obj: Any, vid: int, pid: int) -> list[dict[str, Any]]:
 
     walk(obj, [])
     return matches
+
+
+def _first_hex(value: Any) -> int | None:
+    """vendor_id 等の値から最初の 0x 付き 16 進数を取り出す（要実機検証: 表記は未確定）。"""
+    if isinstance(value, int):
+        return value
+    if isinstance(value, str):
+        m = re.search(r"0x([0-9A-Fa-f]+)", value)
+        if m:
+            return int(m.group(1), 16)
+    return None
+
+
+def list_macos_devices(obj: Any) -> list[dict[str, Any]]:
+    """system_profiler -json の木から vendor_id / product_id を持つ要素を列挙する（--list 用）。
+
+    要実機検証: キー名 vendor_id / product_id / location_id は仮。
+    """
+    devices: list[dict[str, Any]] = []
+
+    def walk(node: Any, path: list[str]) -> None:
+        if isinstance(node, list):
+            for child in node:
+                walk(child, path)
+            return
+        if not isinstance(node, dict):
+            return
+        name = node.get("_name")
+        here = [*path, str(name)] if name is not None else path
+        if "vendor_id" in node or "product_id" in node:
+            devices.append(
+                {
+                    "name": name,
+                    "vid": _first_hex(node.get("vendor_id")),
+                    "pid": _first_hex(node.get("product_id")),
+                    "vendor_id_raw": node.get("vendor_id"),
+                    "product_id_raw": node.get("product_id"),
+                    "location_id": node.get("location_id"),
+                    "path_from_root": here,
+                }
+            )
+        for v in node.values():
+            if isinstance(v, (list, dict)):
+                walk(v, here)
+
+    walk(obj, [])
+    return devices
+
+
+def format_macos_device_list(devices: list[dict[str, Any]]) -> list[str]:
+    """--list 用の一覧表示（macOS）。"""
+    if not devices:
+        return ["（接続中の USB デバイスが見つかりませんでした）"]
+    lines = ["VID:PID    location_id           経路（親バス > … > デバイス）"]
+    for d in devices:
+        if d["vid"] is not None and d["pid"] is not None:
+            vidpid = f"{d['vid']:04X}:{d['pid']:04X}"
+        else:
+            vidpid = f"?（vendor_id={d['vendor_id_raw']!r}, product_id={d['product_id_raw']!r}）"
+        lines.append(
+            f"{vidpid}  {d.get('location_id') or '?':<20}  {' > '.join(d['path_from_root'])}"
+        )
+    lines.append(
+        "※ macOS にはハブ番号/ポート番号・コンパニオンに相当する値が無いため、"
+        "経路（親バス名）と location_id を表示しています（要実機検証）。"
+    )
+    return lines
+
+
+def list_macos(ctx: Context) -> None:  # pragma: no cover - 実機 (macOS) でのみ動作
+    devices: list[dict[str, Any]] = []
+    for data_type in ("SPUSBDataType", "SPUSBHostDataType"):
+        r = run_command([_SYSTEM_PROFILER, data_type, "-json"])
+        if not r.get("ok"):
+            ctx.record(f"system_profiler {data_type} -json", False, error=r.get("error"))
+            continue
+        try:
+            devices = list_macos_devices(json.loads(r["stdout"].decode("utf-8")))
+        except (UnicodeDecodeError, json.JSONDecodeError) as e:
+            ctx.record(f"system_profiler {data_type} -json", False, error=str(e))
+            continue
+        ctx.summary.append(f"（{data_type} より）")
+        if devices:
+            break  # 要実機検証: 新しい macOS では SPUSBHostDataType 側にのみ出る可能性がある
+    ctx.summary.extend(format_macos_device_list(devices))
 
 
 def summarize_macos_target(target: dict[str, Any]) -> list[str]:
@@ -1223,6 +1319,11 @@ def _companion(
 
 def find_windows_target(dump: dict[str, Any], vid: int, pid: int) -> list[dict[str, Any]]:
     """VID:PID が一致する接続中デバイスについて、ハブ番号・ポート番号・経路・ポート能力を返す。"""
+    return [d for d in describe_windows_devices(dump) if (d["vid"], d["pid"]) == (vid, pid)]
+
+
+def describe_windows_devices(dump: dict[str, Any]) -> list[dict[str, Any]]:
+    """接続中の全デバイスについて、ハブ番号・ポート番号・経路・ポート能力を返す。"""
     hubs = dump.get("hubs", [])
     by_index = {h["index"]: h for h in hubs if "index" in h}
     parent_of: dict[int, tuple[int, int]] = {}
@@ -1238,8 +1339,6 @@ def find_windows_target(dump: dict[str, Any], vid: int, pid: int) -> list[dict[s
             dd = ex.get("DeviceDescriptor") or {}
             if ex.get("ConnectionStatus", 0) == 0:
                 continue
-            if dd.get("idVendor") != vid or dd.get("idProduct") != pid:
-                continue
             path = [{"hub_index": h["index"], "port": p["port"]}]
             cur, seen = h["index"], set()
             while cur in parent_of and cur not in seen:
@@ -1250,6 +1349,10 @@ def find_windows_target(dump: dict[str, Any], vid: int, pid: int) -> list[dict[s
             dev = p.get("device") or {}
             matches.append(
                 {
+                    "vid": dd.get("idVendor"),
+                    "pid": dd.get("idProduct"),
+                    "is_hub": bool(ex.get("DeviceIsHub")),
+                    "connection_status": ex.get("ConnectionStatus_name"),
                     "hub_index": h["index"],
                     "hub_description": h.get("description"),
                     "hub_type": _decoded(h, "hub_information_ex").get("HubType_name"),
@@ -1300,11 +1403,29 @@ def _count_ioctls(dump: dict[str, Any]) -> dict[str, dict[str, int]]:
 
 
 def collect_windows(ctx: Context) -> None:  # pragma: no cover - 実機 (Windows) でのみ動作
+    dump = _gather_windows(ctx)
+
+    # 対象デバイスの接続位置（P の判定根拠）
+    ctx.target["matches"] = find_windows_target(dump, ctx.vid, ctx.pid)
+    dump["target"] = ctx.target
+    ctx.check_target()
+
+    path = ctx.write_json(".json", dump)
+    ctx.record("Windows 採取結果の保存", True, file=str(path))
+    ctx.summary.extend(summarize_windows(dump))
+
+
+def list_windows(ctx: Context) -> None:  # pragma: no cover - 実機 (Windows) でのみ動作
+    ctx.summary.extend(format_windows_device_list(describe_windows_devices(_gather_windows(ctx))))
+
+
+def _gather_windows(ctx: Context) -> dict[str, Any]:  # pragma: no cover - 実機 (Windows) でのみ動作
+    """ハブ・ポート情報を採取してダンプ辞書を返す（保存はしない）。"""
     api = _WinApi()
     ctx.is_admin = api.is_admin()
     ctx.platform["windows_build"] = sys.getwindowsversion().build  # type: ignore[attr-defined]
     ctx.platform["pointer_size"] = ctypes.sizeof(ctypes.c_void_p)
-    print(
+    ctx.info(
         f"  管理者権限: {'あり' if ctx.is_admin else 'なし'}"
         "（この採取方式は通常、管理者権限なしで動作する想定です）"
     )
@@ -1390,15 +1511,37 @@ def collect_windows(ctx: Context) -> None:  # pragma: no cover - 実機 (Windows
             " PowerShell を「管理者として実行」で開き、同じコマンドを再実行してください。"
         )
 
-    # 対象デバイスの接続位置（P の判定根拠）
-    ctx.target["matches"] = find_windows_target(dump, ctx.vid, ctx.pid)
-    dump["target"] = ctx.target
-    ctx.check_target()
-
     dump["ioctl_counts"] = ioctl_counts
-    path = ctx.write_json(".json", dump)
-    ctx.record("Windows 採取結果の保存", True, file=str(path))
-    ctx.summary.extend(summarize_windows(dump))
+    return dump
+
+
+def _pad(text: str, width: int) -> str:
+    """全角文字を幅 2 として数え、表示幅 width まで空白で埋める。"""
+    shown = sum(2 if unicodedata.east_asian_width(ch) in "WF" else 1 for ch in text)
+    return text + " " * max(width - shown, 0)
+
+
+def format_windows_device_list(devices: list[dict[str, Any]]) -> list[str]:
+    """--list 用の一覧表示（VID:PID、デバイス名、ハブ番号/ポート番号、コンパニオンの有無）。"""
+    if not devices:
+        return ["（接続中の USB デバイスが見つかりませんでした）"]
+    widths = (9, 16, 22, 14)
+    header = ("VID:PID", "ハブ/ポート", "コンパニオン", "速度")
+    lines = ["  ".join(_pad(h, w) for h, w in zip(header, widths, strict=True)) + "  デバイス名"]
+    for d in devices:
+        c = d.get("companion")
+        comp = f"あり(ハブ{c['hub_index']}/ポート{c['port']})" if c else "なし"
+        name = d.get("device_description") or "?"
+        if d.get("is_hub"):
+            name += "  [ハブ]"
+        cols = (
+            f"{d.get('vid') or 0:04X}:{d.get('pid') or 0:04X}",
+            f"ハブ{d['hub_index']}/ポート{d['port']}",
+            comp,
+            d.get("speed_name") or "?",
+        )
+        lines.append("  ".join(_pad(v, w) for v, w in zip(cols, widths, strict=True)) + f"  {name}")
+    return lines
 
 
 def _bit_names(expanded: dict[str, Any] | None) -> str:
@@ -1540,20 +1683,38 @@ def _write_meta(ctx: Context) -> None:
     ctx.write_json(".meta.json", meta)
 
 
+def _run_list(system: str) -> int:  # pragma: no cover - 実機でのみ動作
+    """--list: 接続中の USB デバイスを一覧表示する。ファイルは一切保存しない。"""
+    ctx = Context("list", Path("."), 0, 0, quiet=True)
+    try:
+        (list_macos if system == "Darwin" else list_windows)(ctx)
+    except Exception:
+        ctx.record("デバイス一覧の取得", False, error=traceback.format_exc())
+    print("接続中の USB デバイス（--device には VID:PID 列の値を指定してください）:")
+    for line in ctx.summary:
+        print(line)
+    return 1 if ctx.failures else 0
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         description="usb-link-check 用の実機ダンプを採取する（標準ライブラリのみ）"
     )
     parser.add_argument(
         "--label",
-        required=True,
-        help="保存ファイル名の接頭辞（例: macos_ssd_fast, windows_usb2）",
+        help="保存ファイル名の接頭辞（例: macos_ssd_fast, windows_usb2）。採取時は必須",
     )
-    parser.add_argument(
+    mode = parser.add_mutually_exclusive_group(required=True)
+    mode.add_argument(
         "--device",
-        required=True,
         help="採取対象デバイスの VID:PID（16 進、例: 0781:5591）。"
         "接続先のハブ番号・ポート番号を記録するために使う",
+    )
+    mode.add_argument(
+        "--list",
+        action="store_true",
+        help="接続中の USB デバイスを一覧表示して終了する（何も保存しない）。"
+        "--device に渡す VID:PID を調べるために使う",
     )
     parser.add_argument(
         "--out-dir",
@@ -1568,6 +1729,16 @@ def main(argv: list[str] | None = None) -> int:
         if hasattr(stream, "reconfigure"):
             stream.reconfigure(errors="replace")
 
+    system = platform.system()
+    if system not in ("Darwin", "Windows"):
+        print("ERROR: このスクリプトは macOS と Windows のみ対応しています", file=sys.stderr)
+        return 4
+
+    if args.list:
+        return _run_list(system)
+
+    if not args.label:
+        parser.error("採取時は --label が必要です")
     try:
         label = validate_label(args.label)
         vid, pid = parse_device_spec(args.device)
@@ -1575,14 +1746,7 @@ def main(argv: list[str] | None = None) -> int:
         print(f"ERROR: {e}", file=sys.stderr)
         return 4
 
-    system = platform.system()
-    if system == "Darwin":
-        collect = collect_macos
-    elif system == "Windows":
-        collect = collect_windows
-    else:
-        print("ERROR: このスクリプトは macOS と Windows のみ対応しています", file=sys.stderr)
-        return 4
+    collect = collect_macos if system == "Darwin" else collect_windows
 
     out_dir: Path = args.out_dir
     out_dir.mkdir(parents=True, exist_ok=True)
