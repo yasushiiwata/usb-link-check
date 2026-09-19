@@ -40,6 +40,8 @@ pythonpath = ["src", "tools"]
 line-length = 100
 target-version = "py310"
 src = ["src", "tools", "tests"]
+# 仕様書内のコード例を整形しない
+extend-exclude = ["*.md"]
 
 [tool.ruff.lint]
 select = ["E", "F", "W", "I", "UP", "B"]

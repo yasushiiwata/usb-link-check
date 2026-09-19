@@ -1,6 +1,6 @@
 # SPEC.md: USB 接続診断ツール `usb-link-check`
 
-版数: 2.0 (Phase 1)
+版数: 2.1 (Phase 1)
 最終更新: 2026-09-20
 
 ---
@@ -192,12 +192,30 @@ Microsoft の USBView が使っているのと同じ経路を用いる。
 5. `IOCTL_USB_GET_HUB_INFORMATION_EX` / `IOCTL_USB_GET_PORT_CONNECTOR_PROPERTIES`
    → ハブ種別（Root / USB2.0 / USB3.0）とポート属性から **P** を取得
 
+#### 所見: P の取得手段（2026-09-20 実機試運転。確定ではなく見込み）
+
+Intel xHCI（`USB ルート ハブ (USB 3.0)`、26 ポート）1 台での試運転結果。採取ダンプでの再確認を要する。
+
+- **`IOCTL_USB_GET_NODE_CONNECTION_INFORMATION_EX_V2` の出力 `SupportedUsbProtocols` がポート単位の P に使える見込み。**
+  - 実測値: ポート 1〜16 = `0x3`（Usb110 + Usb200 = USB2）、ポート 17〜26 = `0x4`（Usb300 = USB3）
+  - 入力は USBView と同じく `Usb300` ビットのみを立てた。
+- **ポート番号とコネクタの対応は 1 対 1 ではない。** USB3 コネクタは物理的には 1 つでも、USB2 の論理ポートと USB3 の論理ポートの 2 つとして現れる。この 2 つは `IOCTL_USB_GET_PORT_CONNECTOR_PROPERTIES` の `CompanionPortNumber` で互いに相手を指す。
+  - 実測値: 5↔25、6↔21、7↔24、11↔23、12↔22
+  - 例えば USB3 コネクタに USB2 ケーブルで挿すと、デバイスは USB2 論理ポート（1〜16 のどれか）に現れる。このため、そのポートの `SupportedUsbProtocols` だけを見ると P を USB2 と誤判定する。**P は、コンパニオンの `SupportedUsbProtocols` まで含めて判定する必要がある**（判定表 A1 と A2 を分けるための要点）。
+  - コンパニオンを持たない論理ポートは、USB2 専用コネクタである見込み（ポート 1, 3, 4, 8 など。`PortIsUserConnectable` = 1）。
+- ルートハブの `IOCTL_USB_GET_HUB_INFORMATION_EX` は `HubType = UsbRootHub(1)` を返し、後続のハブディスクリプタは全バイト 0 だった。**ルートハブについては、ハブ種別から P を得られない。**
+- 構造体サイズは 1 バイト境界パックの前提と一致した。
+  - `USB_NODE_INFORMATION` 76 バイト、`USB_HUB_INFORMATION_EX` 77 バイト、`USB_NODE_CONNECTION_INFORMATION_EX` 35 + 11 × パイプ数、`_EX_V2` 16 バイト
+
 #### 補助（表示用のみ）
 - デバイス名・VID/PID は `Get-PnpDevice` / SetupAPI から取得してよい
 - PowerShell を呼ぶ場合は必ず `powershell.exe -NoProfile -ExecutionPolicy Bypass -Command ...` とし、**出力は UTF-8 を明示**（日本語環境の CP932 で文字化けする）。JSON 化は `ConvertTo-Json -Depth 5`
 
 #### 権限
 - 上記 IOCTL 経路は**管理者権限を必要としない**方式を第一候補とする
+- **確定事項: Windows の全 IOCTL が管理者権限なしで成功することを実機で確認済み（2026-09-20）。**
+  - 対象: `NODE_INFORMATION` / `HUB_INFORMATION_EX` / `HUB_CAPABILITIES_EX` / `NODE_CONNECTION_INFORMATION_EX` / `_EX_V2` / `PORT_CONNECTOR_PROPERTIES` / `NODE_CONNECTION_DRIVERKEY_NAME`
+  - 条件: Windows 11 Pro 26200。ハブは `CreateFile(GENERIC_WRITE, FILE_SHARE_WRITE)` で開いた。
 - もし管理者権限が必須と判明した場合は、起動時に明確なメッセージを出して終了コード 4 とする（黙って空の結果を返してはならない）
 
 ---
@@ -335,16 +353,32 @@ usb-link-check [OPTIONS]
 ### 9.1 フィクスチャ
 
 - `tests/fixtures/raw/` に**実機から採取した生ダンプ**のみを置く。**AI が推測で作成したダンプを置いてはならない。**
-- 最低限そろえる実機ダンプ:
+- 採取は `tools/collect_dump.py --label <label> --device <VID:PID>` で行う。
+  - ファイル名は `<label>.<種別>.<拡張子>` の形で、`--label` から機械的に決まる。主データだけは `<label>.json` とする。
+  - 対象デバイスの接続先（ハブ番号・ポート番号・経路・コンパニオン）は、`<label>.meta.json` の `target` に記録される。Windows では `<label>.json` の `target` にも記録される。これが P の判定根拠になる。
 
-| ファイル | 内容 |
-|---|---|
-| `macos_ssd_fast.json` | 高速ケーブル接続時の `system_profiler SPUSBDataType -json` |
-| `macos_ssd_usb2.json` | USB 2.0 ケーブル接続時の同上 |
-| `macos_ioreg_fast.txt` | 同条件の `ioreg -p IOUSB -l -w 0` |
-| `macos_ioreg_usb2.txt` | 同上 |
-| `windows_fast.json` | 高速ケーブル接続時の収集スクリプト出力 |
-| `windows_usb2.json` | USB 2.0 ケーブル接続時の同上 |
+最低限そろえる実機ダンプ:
+
+| label | 構成 | 期待する判定 |
+|---|---|---|
+| `macos_ssd_fast` | 高速ケーブル | ケーブルを律速と判定しない（§10） |
+| `macos_ssd_usb2` | USB 2.0 ケーブル | B1 |
+| `windows_fast` | USB3 ポート + 高速ケーブル | 正常系 |
+| `windows_usb2` | USB3 ポート + USB 2.0 ケーブル | ケーブル律速（A1） |
+| `windows_port2` | USB2 専用ポート（コンパニオンを持たないポート）+ 高速ケーブル | ポート律速（A2） |
+
+`windows_port2` に使うポートの注意: デバイスが USB2 論理ポート（1〜16 側）に現れても、そのポートが USB2 専用だとは限らない。4.2「所見」のとおり、USB3 コネクタに USB2 ケーブルで挿した場合（`windows_usb2`）も 1〜16 側に現れるため、A1 と A2 の区別はコンパニオンの有無で行う。
+
+label ごとに生成されるファイル:
+
+| ファイル | 内容 | OS |
+|---|---|---|
+| `<label>.json` | `system_profiler SPUSBDataType -json` の標準出力そのまま | macOS |
+| `<label>.thunderbolt.json` | `system_profiler SPThunderboltDataType -json`（Thunderbolt 判別用） | macOS |
+| `<label>.ioreg.txt` | `ioreg -p IOUSB -l -w 0` | macOS |
+| `<label>.usbhost.json` | `system_profiler SPUSBHostDataType -json`（`-listDataTypes` に存在する macOS のみ） | macOS |
+| `<label>.json` | SetupAPI + USB IOCTL の採取結果。解釈した値と生バイト列 (hex) を併記する | Windows |
+| `<label>.meta.json` | 採取環境、各項目の成否、対象デバイスの接続先 (`target`) | 共通 |
 
 - **サニタイズ必須**: 採取ダンプに含まれるシリアル番号・固有 ID は `REDACTED` に置換してからコミットすること（パブリックリポジトリに機器の資産情報を出さない）。サニタイズは `tools/sanitize_dump.py` として実装し、自動化すること。
 
