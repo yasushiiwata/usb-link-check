@@ -32,4 +32,6 @@ coverage.xml
 .DS_Store
 Thumbs.db
 
+# 他社製ツール（UsbTreeView）本体と設定。公開リポジトリに含めない
 tools/UsbTreeView.exe
+tools/UsbTreeView.ini
