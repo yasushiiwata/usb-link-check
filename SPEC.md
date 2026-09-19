@@ -1,0 +1,379 @@
+# SPEC.md: USB 接続診断ツール `usb-link-check`
+
+版数: 2.0 (Phase 1)
+最終更新: 2026-09-20
+
+---
+
+## 1. 目的
+
+PC と USB デバイスの間の接続について、**「ポート」「ケーブル」「デバイス」の 3 要素それぞれの能力**を可能な範囲で明らかにし、
+
+1. 現在のリンク速度がこの構成で出せる最高速かどうかを判定する
+2. 最高速でない場合、**どの要素がボトルネックか**を特定する
+3. 何を変えればどこまで速くなるかを、**断定できる範囲を明示して**提案する
+
+ことを目的とする CLI ツール。
+
+### 1.1 設計の中核となる物理的事実
+
+USB のリンク速度は接続経路上の最も遅い要素で決まる。
+
+```
+L = min(P, C, D)
+
+L : 実際にネゴシエートされたリンク速度   … 測定可能
+P : PC 側ポート（およびハブ）の能力      … 測定可能
+D : デバイスの能力                       … 環境により測定可能
+C : ケーブルの能力                       … 測定不可能（後述）
+```
+
+**ケーブルは自身の仕様を申告しない。** USB ケーブルには（USB-C の eMarker を除き）識別情報が無く、eMarker も USB Power Delivery コントローラの管轄で OS の USB スタックからは読めない。
+
+したがって本ツールは **C を測定しない。C は L・P・D から推論する。**
+「ケーブル仕様を取得する」実装を書いてはならない。
+
+---
+
+## 2. スコープ
+
+### 2.1 Phase 1 で実装する（本仕様書の対象）
+
+- L / P / D の取得
+- C の推論とボトルネック特定
+- 改善提案の生成（**プロトコルリンク速度 = Gbps のみ**）
+- 確度（確定 / 下限 / 不明）の明示
+- テキスト出力と JSON 出力、終了コード
+
+### 2.2 Phase 1 では実装しない（明示的に対象外）
+
+| 項目 | 扱い |
+|---|---|
+| 実効スループット測定（MB/s） | Phase 3。`--benchmark` は実装しない |
+| デバイスのハードウェア上限評価（中の SSD/HDD の実力） | Phase 3 |
+| ケーブルプロファイル記録・what-if の確度向上 | Phase 2 |
+| 挿抜監視（`--watch`） | Phase 2 |
+| **Thunderbolt / USB4 接続のデバイス** | **対象外。検出したら 2.3 の通り明示して終了する** |
+| Linux | 非対応。実行されたら明示してエラー終了 |
+| USB Power Delivery / 給電能力 | 対象外 |
+
+### 2.3 Thunderbolt / USB4 の扱い（重要）
+
+Thunderbolt / USB4 で接続されたデバイスは macOS の `SPUSBDataType` に現れない（`SPThunderboltDataType` 側に現れる）。これを知らずに実装すると「デバイス未検出 = 断線ケーブル」と誤判定する。
+
+Phase 1 の要件:
+
+- 対象デバイスが USB ツリーに見つからない場合、**「断線」と断定してはならない**
+- macOS では `system_profiler SPThunderboltDataType -json` を**存在確認のためだけに**実行し、そこに該当機器があれば
+  `NOT SUPPORTED: Thunderbolt/USB4 接続のデバイスは Phase 1 の対象外です` と表示して終了コード 3 で終了する
+- Windows でも同等の判別ができない場合は、「未検出」ではなく「判定不能」として扱う
+
+---
+
+## 3. 用語とデータモデル
+
+### 3.1 LinkSpeed
+
+**内部表現は必ず Mbps の数値とする。** 規格名（USB 3.0 / 3.1 Gen1 / 3.2 Gen1 はすべて 5Gbps）は表示時にのみ変換する。
+
+| 識別子 | Mbps | 表示名 |
+|---|---:|---|
+| `LOW_SPEED` | 1.5 | USB 1.0 Low-Speed (1.5 Mbps) |
+| `FULL_SPEED` | 12 | USB 1.1 Full-Speed (12 Mbps) |
+| `HIGH_SPEED` | 480 | USB 2.0 High-Speed (480 Mbps) |
+| `SUPER_SPEED` | 5000 | USB 3.2 Gen1 / SuperSpeed (5 Gbps) |
+| `SUPER_SPEED_PLUS` | 10000 | USB 3.2 Gen2 / SuperSpeed+ (10 Gbps) |
+| `SUPER_SPEED_PLUS_2X2` | 20000 | USB 3.2 Gen2x2 (20 Gbps) |
+
+- 比較演算（`<`, `min`）が可能なこと
+- Full-Speed / Low-Speed への低下も正常に検出・表示すること（ケーブル不良で 12Mbps まで落ちる事例は実在する）
+
+### 3.2 Confidence（確度）
+
+本ツールの価値は「断定できることとできないことを分けること」にある。すべての能力値は確度を伴う。
+
+| 値 | 意味 | 表示 |
+|---|---|---|
+| `EXACT` | その速度であると確定 | `10 Gbps` |
+| `AT_LEAST` | その速度以上であることのみ判明（上限不明） | `5 Gbps 以上（上限不明）` |
+| `UNKNOWN` | 全く不明 | `不明` |
+
+### 3.3 Capability
+
+```python
+@dataclass(frozen=True)
+class Capability:
+    speed: LinkSpeed | None  # UNKNOWN のとき None
+    confidence: Confidence
+```
+
+### 3.4 接続チェーン
+
+経路は要素の連鎖としてモデル化する。ハブが挟まる場合は要素が増える。
+
+```
+HostController → [ExternalHub …] → Port → Cable → Device
+```
+
+```python
+@dataclass
+class ChainElement:
+    kind: Literal["controller", "hub", "port", "cable", "device"]
+    name: str  # 表示名（例: "USB 3.1 Bus", "Generic USB Hub"）
+    capability: Capability
+    is_bottleneck: bool = False
+
+
+@dataclass
+class Diagnosis:
+    link_speed: LinkSpeed  # L（測定値）
+    chain: list[ChainElement]
+    achievable_max: Capability  # 現構成で到達しうる最高速
+    verdict: Verdict  # OPTIMAL / IMPROVABLE / UNDETERMINED / NOT_DETECTED
+    suggestions: list[Suggestion]
+
+
+@dataclass
+class Suggestion:
+    target: str  # "cable" / "port" / "hub"
+    action: str  # 人間向けの日本語文
+    expected: Capability  # 変更後に期待できる速度と確度
+    certainty: Literal["confirmed", "likely", "unknown"]
+```
+
+---
+
+## 4. 情報取得仕様
+
+> **警告（実装者向け）**
+> 本章に書かれたコマンド名・キー名・構造体名は**設計方針**であり、実機出力による確定が済むまでは仮である。
+> 実機ダンプ（`tests/fixtures/raw/`）と食い違う場合は、**常に実機ダンプが正**。
+> 実機ダンプが存在しない対象については実装を進めず、`TODO: 実機ダンプ待ち` として停止し人間に報告すること。
+> 推測でフィクスチャを作成することを固く禁じる（CLAUDE.md 必須ルール 1）。
+
+### 4.1 macOS
+
+#### L（リンク速度）
+- 一次手段: `/usr/sbin/system_profiler SPUSBDataType -json`
+  - `_items` が**ハブ配下に再帰的にネストする**。必ず再帰探索すること
+  - 速度は `device_speed` キー。**`-json` 出力の値はテキスト出力（`Up to 10 Gb/sec`）とは表記が異なり、`high_speed` / `super_speed` / `super_speed_plus` のようなトークン形式である可能性が高い**。実機ダンプで確定させること
+  - macOS のバージョンによりキー名が異なりうる。未知の値に遭遇したら黙って落とさず、`UNKNOWN` として値を保持し `--debug` で原寸表示すること
+- 二次手段（フォールバック）: `ioreg -p IOUSB -l -w 0` の `Speed` 属性
+
+#### P（ポート能力）
+- 対象デバイスの**親要素**（ルートハブ／バス）を JSON ツリー上で辿り、その名称・速度表記から判定する（例: `USB 3.1 Bus` → 10 Gbps）
+- 親が外部ハブであれば `ChainElement(kind="hub")` として別要素で記録する
+- 判定不能な場合は `UNKNOWN` とし、推測で埋めないこと
+
+#### D（デバイス能力）
+- **Phase 1 では、macOS では原則 `UNKNOWN` として扱ってよい。**
+  デバイスの SuperSpeed 対応可否は BOS ディスクリプタで判別するが、macOS の標準コマンドからは安定して取得できない。
+- `ioreg` から取得できる経路が実機ダンプで確認できた場合のみ実装する。確認できなければ `UNKNOWN` のまま進める（§5.2 の D 不明ロジックが機能する）。
+- **デバイス名からの推測（"Extreme SSD" だから 10Gbps 等）を実装してはならない。**
+
+### 4.2 Windows
+
+PowerShell の `Get-PnpDevice` ではリンク速度は取得できない。`MSUsb_DeviceInformation`（root\\WMI）はドライバ依存で空を返すことが多く、管理者権限も要る。いずれも一次手段にしない。
+
+#### 一次手段: Win32 API を `ctypes` で直接呼ぶ（外部依存なし）
+
+Microsoft の USBView が使っているのと同じ経路を用いる。
+
+1. `SetupDiGetClassDevs`（GUID_DEVINTERFACE_USB_HUB）でハブを列挙
+2. 各ハブを `CreateFile` で開く
+3. `IOCTL_USB_GET_NODE_CONNECTION_INFORMATION_EX`
+   → `USB_NODE_CONNECTION_INFORMATION_EX.Speed`（0=Low, 1=Full, 2=High, 3=Super）で **L** を取得
+4. `IOCTL_USB_GET_NODE_CONNECTION_INFORMATION_EX_V2`
+   → `USB_NODE_CONNECTION_INFORMATION_EX_V2.Flags` から **L と D の両方**を取得
+   - `DeviceIsOperatingAtSuperSpeedPlusOrHigher` → 現在 10Gbps 以上で動作中
+   - `DeviceIsSuperSpeedPlusCapableOrHigher` → **デバイスは 10Gbps 対応（D）**
+   - `DeviceIsSuperSpeedCapableOrHigher` → **デバイスは 5Gbps 対応（D）**
+   - ※「対応しているのに SuperSpeed で動いていない」がまさにフォールバック状態であり、この API はそれを直接表現できる。**Windows では D が取得できる**
+5. `IOCTL_USB_GET_HUB_INFORMATION_EX` / `IOCTL_USB_GET_PORT_CONNECTOR_PROPERTIES`
+   → ハブ種別（Root / USB2.0 / USB3.0）とポート属性から **P** を取得
+
+#### 補助（表示用のみ）
+- デバイス名・VID/PID は `Get-PnpDevice` / SetupAPI から取得してよい
+- PowerShell を呼ぶ場合は必ず `powershell.exe -NoProfile -ExecutionPolicy Bypass -Command ...` とし、**出力は UTF-8 を明示**（日本語環境の CP932 で文字化けする）。JSON 化は `ConvertTo-Json -Depth 5`
+
+#### 権限
+- 上記 IOCTL 経路は**管理者権限を必要としない**方式を第一候補とする
+- もし管理者権限が必須と判明した場合は、起動時に明確なメッセージを出して終了コード 4 とする（黙って空の結果を返してはならない）
+
+---
+
+## 5. 判定ロジック（本ツールの中核）
+
+`L = min(P, C, D)` を逆算して C を推論する。
+
+### 5.1 D が判明している場合（主に Windows）
+
+| # | 条件 | ボトルネック | C について言えること | 提案 | 確度 |
+|---|---|---|---|---|---|
+| A1 | `L < min(P, D)` | **ケーブル（確定）** | `C = L`（EXACT） | ケーブルを交換すれば `min(P,D)` まで出る | `confirmed` |
+| A2 | `L = P < D` | **ポート** | `C ≥ L`（AT_LEAST） | より高速なポート/PC に変更すれば L より速くなる。ただし**上限はケーブル次第で不明**（最大 D） | `likely` |
+| A3 | `L = D ≤ P` | デバイス | `C ≥ L` | 改善余地なし。デバイスが天井 | — |
+| A4 | `L = P = D` | なし | `C ≥ L` | **現構成の最高速を達成済み** | — |
+
+**A2 の文言に注意。** 「ポートを変えれば 10Gbps 出ます」と断定してはならない。ケーブル能力は `L 以上`としか分かっていない。断定するとユーザーが機材を買い替えた後に「ケーブルのせいで速くならない」という最悪の結果になる。
+
+### 5.2 D が不明な場合（主に macOS）
+
+| # | 条件 | 結論 | 提案 |
+|---|---|---|---|
+| B1 | `L < P` | **ケーブルまたはデバイスが律速（切り分け不能）** | 「既知の高速ケーブルに差し替えて再測定してください。速度が上がればケーブル、変わらなければデバイス側が原因です」 |
+| B2 | `L = P` | **ポートが律速の候補**（C ≥ L, D ≥ L） | 「より高速なポートで再測定してください」 |
+| B3 | `P` も不明 | **判定不能** | 現在値のみ表示し、終了コード 3 |
+
+B1 の提案文は「実験によって切り分ける手順」を提示している点が重要。測れないものを推測で埋めず、ユーザーに次の一手を渡す。
+
+### 5.3 ハブが挟まる場合
+
+チェーン上に外部ハブ H があるとき、上流側の実効能力は `min(P, H)` とする。
+`L = H < min(P, D)` の場合はハブがボトルネックであり、提案は「デバイスを PC に直結してください」とする。
+
+### 5.4 achievable_max（現構成で到達しうる最高速）
+
+- D 判明時: `min(P, D)`（ケーブルを理想としたときの上限）
+- D 不明時: `UNKNOWN`（`P` を上限値として `AT_LEAST` 表示はしない。P より速い D があるとは限らないため、`最大 P`と注記するに留める）
+
+---
+
+## 6. 出力仕様
+
+### 6.1 テキスト出力（既定 / `rich` 使用）
+
+```
+現在の接続
+  ポート      : USB-C (USB 3.2 Gen2x2)          20 Gbps
+  ケーブル    : 推定 5 Gbps                      ← ボトルネック
+  デバイス    : SanDisk Extreme SSD              10 Gbps
+  ─────────────────────────────────────────────
+  リンク速度  : 5 Gbps (USB 3.2 Gen1)
+
+判定  [FAIL] 本構成の最高速 10 Gbps に対し 5 Gbps で接続中
+
+改善提案
+  1. ケーブルを 10Gbps 対応品に交換  → 10 Gbps  （確実・約2倍）
+  2. ポート変更                      → 効果なし（ポートは既に十分）
+  構成変更後の理論上限               : 10 Gbps（デバイス能力が天井）
+```
+
+- 確度が `AT_LEAST` の値には必ず「以上（上限不明）」を付記すること
+- 確度が `UNKNOWN` の値は「不明」と表示し、**数値を推測で埋めない**
+- 色: OPTIMAL=緑 / IMPROVABLE=黄 / UNDETERMINED=灰 / NOT_DETECTED=赤
+
+### 6.2 JSON 出力（`--json`）
+
+```json
+{
+  "schema_version": 1,
+  "timestamp": "2026-09-20T12:00:00+09:00",
+  "os": "darwin",
+  "device": { "name": "SanDisk Extreme SSD", "vid": "0x0781", "pid": "0x5591" },
+  "link_speed_mbps": 5000,
+  "chain": [
+    { "kind": "port",   "name": "USB 3.2 Gen2x2 port", "speed_mbps": 20000, "confidence": "exact",    "is_bottleneck": false },
+    { "kind": "cable",  "name": "(unidentifiable)",    "speed_mbps": 5000,  "confidence": "exact",    "is_bottleneck": true  },
+    { "kind": "device", "name": "SanDisk Extreme SSD", "speed_mbps": 10000, "confidence": "exact",    "is_bottleneck": false }
+  ],
+  "achievable_max_mbps": 10000,
+  "achievable_max_confidence": "exact",
+  "verdict": "IMPROVABLE",
+  "suggestions": [
+    { "target": "cable", "action": "10Gbps対応ケーブルへ交換", "expected_mbps": 10000, "certainty": "confirmed" }
+  ]
+}
+```
+
+- `speed_mbps` が不明のときは `null`、`confidence` は `"unknown"`
+- `--json` 指定時は `rich` による装飾出力を一切行わないこと（標準出力は JSON のみ）
+
+### 6.3 終了コード
+
+| コード | 意味 |
+|---:|---|
+| 0 | `OPTIMAL` — 現構成の最高速を達成 |
+| 1 | `IMPROVABLE` — ボトルネックあり（改善余地あり） |
+| 2 | `NOT_DETECTED` — 対象デバイスが USB ツリーに存在しない |
+| 3 | `UNDETERMINED` — 情報不足で判定不能 / 対象外構成（Thunderbolt 等） |
+| 4 | 実行エラー（非対応 OS、権限不足、コマンド失敗） |
+
+---
+
+## 7. CLI 仕様
+
+```
+usb-link-check [OPTIONS]
+
+  --device <SPEC>   対象デバイスの指定。"VID:PID"（例: 0781:5591）または
+                    デバイス名の部分一致文字列。
+                    未指定時: USB マスストレージクラスのデバイスを対象とし、
+                    複数該当した場合は一覧を表示して終了コード 3 で終了する
+                    （「直近接続」のような曖昧な自動選択は実装しない）
+  --list            検出した USB デバイスを全件一覧表示して終了（終了コード 0）
+  --json            結果を JSON で出力
+  --debug           取得した生のコマンド出力／構造体値をそのまま標準エラーへ出力
+  --version         バージョンを表示
+  -h, --help        ヘルプ
+```
+
+- `--device` 未指定で候補が 1 つに定まらない場合、**勝手に選ばない**こと。曖昧な自動選択は誤診断の温床になる。
+
+---
+
+## 8. エラー処理
+
+- 非対応 OS（Linux 等）: `ERROR: このツールは macOS と Windows のみ対応しています` → 終了コード 4
+- 外部コマンドの失敗・タイムアウト（既定 10 秒）: 原因を明示して終了コード 4
+- 未知の速度値に遭遇: 例外で落とさず `UNKNOWN` として扱い、`--debug` で原寸を出せること
+
+---
+
+## 9. テスト仕様
+
+### 9.1 フィクスチャ
+
+- `tests/fixtures/raw/` に**実機から採取した生ダンプ**のみを置く。**AI が推測で作成したダンプを置いてはならない。**
+- 最低限そろえる実機ダンプ:
+
+| ファイル | 内容 |
+|---|---|
+| `macos_ssd_fast.json` | 高速ケーブル接続時の `system_profiler SPUSBDataType -json` |
+| `macos_ssd_usb2.json` | USB 2.0 ケーブル接続時の同上 |
+| `macos_ioreg_fast.txt` | 同条件の `ioreg -p IOUSB -l -w 0` |
+| `macos_ioreg_usb2.txt` | 同上 |
+| `windows_fast.json` | 高速ケーブル接続時の収集スクリプト出力 |
+| `windows_usb2.json` | USB 2.0 ケーブル接続時の同上 |
+
+- **サニタイズ必須**: 採取ダンプに含まれるシリアル番号・固有 ID は `REDACTED` に置換してからコミットすること（パブリックリポジトリに機器の資産情報を出さない）。サニタイズは `tools/sanitize_dump.py` として実装し、自動化すること。
+
+### 9.2 テスト方針
+
+- **パーサー層（`platforms/*.py` の解析関数）: 用意した実機フィクスチャ全件に対するテストを必須とし、分岐網羅 100% を目標とする**
+- **判定ロジック（`diagnosis.py`）: §5 の判定表 A1〜A4 / B1〜B3 の各行に対応するテストを 1 件以上持つこと**（表とテストが 1:1 対応していること）
+- **subprocess / ctypes の実行層は `# pragma: no cover` で除外する。** 全体カバレッジ率を目標値にしない（グルーコードの水増しテストを誘発するため）
+- OS コマンド実行部は抽象基底クラス（`platforms/base.py`）で抽象化し、テストではフィクスチャを返すスタブに差し替えること。USB 機器が無い CI 上で全テストが通ること
+
+### 9.3 CI
+
+- `.github/workflows/test.yml` を作成し、`ubuntu-latest` / `macos-latest` / `windows-latest` × Python 3.10 / 3.12 のマトリクスで `pytest` と `ruff` を実行すること
+- `gh` の認証スコープに `workflow` が必要
+
+---
+
+## 10. 受け入れ基準（Definition of Done）
+
+すべて自動またはコマンド一発で検証できる形であること。
+
+- [ ] `pytest` が全 OS の CI でパスする（USB 機器なしで完走する）
+- [ ] `usb-link-check --version` がバージョンを出力し終了コード 0
+- [ ] `usb-link-check --help` が §7 の全オプションを表示する
+- [ ] フィクスチャ `macos_ssd_usb2.json` を入力したとき、判定が `IMPROVABLE`、ボトルネックが `cable` または「ケーブルまたはデバイス」、終了コード 1 になる
+- [ ] フィクスチャ `macos_ssd_fast.json` を入力したとき、判定が `OPTIMAL` または `IMPROVABLE`（ポート律速）となり、**ケーブルをボトルネックと判定しない**
+- [ ] `--json` 出力が §6.2 のスキーマに適合する（スキーマ検証テストがある）
+- [ ] D が `UNKNOWN` のフィクスチャで、出力に「不明」が表示され、**推測値が入らない**
+- [ ] 判定表 §5 の A1〜A4 / B1〜B3 すべてに対応するユニットテストが存在する
+- [ ] `tests/fixtures/raw/` 内にシリアル番号が残っていないことを検査するテストがある
+- [ ] Linux 上で実行すると終了コード 4 とメッセージが出る
+- [ ] README.md（日英）に、**「ケーブル能力は測定ではなく推論である」**という前提が明記されている
