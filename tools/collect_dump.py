@@ -2,10 +2,14 @@
 """実機ダンプ採取スクリプト（Python 標準ライブラリのみ・追加インストール不要）。
 
 使い方:
-    python tools/collect_dump.py --label macos_ssd_fast
-    python tools/collect_dump.py --label windows_fast
+    python tools/collect_dump.py --label macos_ssd_fast --device 0781:5591
+    python tools/collect_dump.py --label windows_fast --device 0781:5591
 
 保存先: tests/fixtures/raw/<label>.*（--out-dir で変更可）
+
+--device（VID:PID）で指定した対象デバイスについて、接続先のハブ番号・ポート番号・
+経路を必ず記録し（Windows は <label>.json と meta の "target"、macOS は meta の "target"）、
+画面の要約の先頭に表示する。USB2 / USB3 どちらのポートに挿したかを後から判別するため。
 
   macOS
     <label>.json              system_profiler SPUSBDataType -json の標準出力そのまま
@@ -63,6 +67,17 @@ def validate_label(label: str) -> str:
     return label
 
 
+_DEVICE_SPEC_RE = re.compile(r"^(?P<vid>[0-9A-Fa-f]{1,4}):(?P<pid>[0-9A-Fa-f]{1,4})$")
+
+
+def parse_device_spec(spec: str) -> tuple[int, int]:
+    """ "VID:PID"（16 進）を (vid, pid) に変換する。"""
+    m = _DEVICE_SPEC_RE.match(spec.strip())
+    if not m:
+        raise ValueError(f"--device は VID:PID（16 進、例: 0781:5591）で指定してください: {spec!r}")
+    return int(m.group("vid"), 16), int(m.group("pid"), 16)
+
+
 def expand_bits(value: int, names: dict[int, str]) -> dict[str, Any]:
     """ビットフィールドを「生の数値」と「ビットごとの真偽」の両方で表す。
 
@@ -85,9 +100,13 @@ def expand_bits(value: int, names: dict[int, str]) -> dict[str, Any]:
 class Context:
     """採取 1 回分の状態（保存ファイル・成否・警告）を保持する。"""
 
-    def __init__(self, label: str, out_dir: Path) -> None:
+    def __init__(self, label: str, out_dir: Path, vid: int, pid: int) -> None:
         self.label = label
         self.out_dir = out_dir
+        self.vid = vid
+        self.pid = pid
+        # 対象デバイスの接続位置（P の判定根拠）。meta と要約に必ず出す。
+        self.target: dict[str, Any] = {"device": f"{vid:04X}:{pid:04X}", "matches": []}
         self.items: list[dict[str, Any]] = []
         self.saved: list[Path] = []
         self.warnings: list[str] = []
@@ -129,6 +148,20 @@ class Context:
     @property
     def failures(self) -> list[dict[str, Any]]:
         return [i for i in self.items if i["status"] != "ok"]
+
+    def check_target(self) -> None:
+        """対象デバイスが一意に見つかったかを判定し、見つからなければ警告する。"""
+        n = len(self.target["matches"])
+        if n == 0:
+            self.warn(
+                f"対象デバイス {self.target['device']} が見つかりませんでした。"
+                " 接続と VID:PID を確認して再採取してください（ハブ/ポート番号が記録されません）。"
+            )
+        elif n > 1:
+            self.warn(
+                f"対象デバイス {self.target['device']} が {n} 台見つかりました。"
+                " 採取対象以外の同型機は外してから再採取してください。"
+            )
 
 
 def _now_iso() -> str:
@@ -240,6 +273,68 @@ def summarize_system_profiler(obj: Any) -> list[str]:
     return lines
 
 
+def _id_matches(value: Any, expected: int) -> bool:
+    """vendor_id / product_id 相当の値が expected と一致するか。
+
+    要実機検証: 値の表記（"0x0781", "0x0781  (SanDisk Corporation)", 整数など）は未確定の
+    ため、整数、または文字列中の 0x 付き 16 進表記のいずれでも一致とみなす。
+    """
+    if isinstance(value, int):
+        return value == expected
+    if isinstance(value, str):
+        return any(int(h, 16) == expected for h in re.findall(r"0x([0-9A-Fa-f]+)", value))
+    return False
+
+
+def find_macos_target(obj: Any, vid: int, pid: int) -> list[dict[str, Any]]:
+    """system_profiler -json の木から VID:PID が一致する要素を探し、親の経路を返す。
+
+    要実機検証: キー名 vendor_id / product_id / location_id は仮。
+    経路の先頭側（バス名。例: "USB 3.1 Bus"）が P の判定根拠になる想定。
+    """
+    matches: list[dict[str, Any]] = []
+
+    def walk(node: Any, path: list[str]) -> None:
+        if isinstance(node, list):
+            for child in node:
+                walk(child, path)
+            return
+        if not isinstance(node, dict):
+            return
+        name = node.get("_name")
+        here = [*path, str(name)] if name is not None else path
+        if _id_matches(node.get("vendor_id"), vid) and _id_matches(node.get("product_id"), pid):
+            matches.append(
+                {
+                    "path_from_root": here,
+                    "location_id": node.get("location_id"),
+                    "speed_values": {
+                        k: v
+                        for k, v in node.items()
+                        if "speed" in k.lower() and isinstance(v, (str, int, float))
+                    },
+                }
+            )
+        for v in node.values():
+            if isinstance(v, (list, dict)):
+                walk(v, here)
+
+    walk(obj, [])
+    return matches
+
+
+def summarize_macos_target(target: dict[str, Any]) -> list[str]:
+    lines = [f"■ 対象デバイス {target['device']} の接続位置（P の判定根拠）"]
+    if not target["matches"]:
+        lines.append("  （見つかりませんでした）")
+    for m in target["matches"]:
+        lines.append("  経路: " + " > ".join(m["path_from_root"]))
+        lines.append(f"  location_id: {m.get('location_id')}")
+        speeds = ", ".join(f"{k}={v}" for k, v in m["speed_values"].items()) or "（なし）"
+        lines.append(f"  speed を含む値: {speeds}")
+    return lines
+
+
 _IOREG_NODE = re.compile(r"\+-o (?P<name>.+?)\s+<class (?P<cls>[^,>]+)")
 _IOREG_SPEED = re.compile(r'"(?P<key>[^"]*[Ss]peed[^"]*)"\s*=\s*(?P<val>.+?)\s*$')
 
@@ -312,8 +407,23 @@ def collect_macos(ctx: Context) -> None:  # pragma: no cover - 実機 (macOS) �
             ".usbhost.json",
         )
 
+    # 対象デバイスの接続位置。SPUSBDataType で見つからなければ SPUSBHostDataType も探す。
+    target_source = "SPUSBDataType"
+    ctx.target["matches"] = find_macos_target(spusb, ctx.vid, ctx.pid)
+    if not ctx.target["matches"] and usbhost is not None:
+        target_source = "SPUSBHostDataType"
+        ctx.target["matches"] = find_macos_target(usbhost, ctx.vid, ctx.pid)
+    ctx.target["source"] = target_source
+    if not ctx.target["matches"] and find_macos_target(thunderbolt, ctx.vid, ctx.pid):
+        ctx.target["found_in_thunderbolt"] = True
+        ctx.warn(
+            "対象デバイスは SPThunderboltDataType 側に見つかりました（Phase 1 対象外の構成）。"
+        )
+    ctx.check_target()
+
     # ---- 目視照合用の要約 ----
     s = ctx.summary
+    s.extend(summarize_macos_target(ctx.target))
     s.append("■ system_profiler SPUSBDataType（キー名に speed を含む値を表示）")
     s.extend(summarize_system_profiler(spusb) or ["  （デバイスが見つかりませんでした）"])
     if usbhost is not None:
@@ -1072,6 +1182,105 @@ def _collect_hub(  # pragma: no cover - 実機 (Windows) でのみ動作
         api.close(handle)
 
 
+def _decoded(owner: dict[str, Any] | None, key: str) -> dict[str, Any]:
+    return ((owner or {}).get(key) or {}).get("decoded") or {}
+
+
+def _find_port(hub: dict[str, Any] | None, port: int) -> dict[str, Any] | None:
+    return next((p for p in (hub or {}).get("ports", []) if p.get("port") == port), None)
+
+
+def _companion(
+    hubs_by_index: dict[int, dict[str, Any]], port: dict[str, Any]
+) -> dict[str, Any] | None:
+    """ポートのコンパニオン（同じ物理コネクタの USB2 / USB3 の片割れ）を返す。
+
+    実機所見 (2026-09-20): xHCI ルートハブでは USB3 対応コネクタ 1 つが USB2 論理ポートと
+    USB3 論理ポートの 2 つとして現れ、CompanionPortNumber で相互に参照し合う。
+    """
+    pcp = _decoded(port, "port_connector_properties")
+    cport = pcp.get("CompanionPortNumber")
+    if not cport:
+        return None
+    link = _norm_device_path(pcp.get("CompanionHubSymbolicLinkName") or "")
+    chub_index = next(
+        (
+            i
+            for i, h in hubs_by_index.items()
+            if _norm_device_path(h.get("device_path", "")) == link
+        ),
+        None,
+    )
+    cport_rec = _find_port(hubs_by_index.get(chub_index), cport) if chub_index is not None else None
+    return {
+        "hub_index": chub_index,
+        "port": cport,
+        "supported_usb_protocols": _decoded(cport_rec, "connection_information_ex_v2").get(
+            "SupportedUsbProtocols"
+        ),
+    }
+
+
+def find_windows_target(dump: dict[str, Any], vid: int, pid: int) -> list[dict[str, Any]]:
+    """VID:PID が一致する接続中デバイスについて、ハブ番号・ポート番号・経路・ポート能力を返す。"""
+    hubs = dump.get("hubs", [])
+    by_index = {h["index"]: h for h in hubs if "index" in h}
+    parent_of: dict[int, tuple[int, int]] = {}
+    for h in hubs:
+        for p in h.get("ports", []):
+            if p.get("downstream_hub_index") is not None:
+                parent_of[p["downstream_hub_index"]] = (h["index"], p["port"])
+
+    matches: list[dict[str, Any]] = []
+    for h in hubs:
+        for p in h.get("ports", []):
+            ex = _decoded(p, "connection_information_ex")
+            dd = ex.get("DeviceDescriptor") or {}
+            if ex.get("ConnectionStatus", 0) == 0:
+                continue
+            if dd.get("idVendor") != vid or dd.get("idProduct") != pid:
+                continue
+            path = [{"hub_index": h["index"], "port": p["port"]}]
+            cur, seen = h["index"], set()
+            while cur in parent_of and cur not in seen:
+                seen.add(cur)
+                cur, up_port = parent_of[cur]
+                path.insert(0, {"hub_index": cur, "port": up_port})
+            v2 = _decoded(p, "connection_information_ex_v2")
+            dev = p.get("device") or {}
+            matches.append(
+                {
+                    "hub_index": h["index"],
+                    "hub_description": h.get("description"),
+                    "hub_type": _decoded(h, "hub_information_ex").get("HubType_name"),
+                    "port": p["port"],
+                    "path_from_root": path,
+                    "device_description": dev.get("bus_reported_description")
+                    or dev.get("description"),
+                    "port_supported_usb_protocols": v2.get("SupportedUsbProtocols"),
+                    "port_properties": _decoded(p, "port_connector_properties").get(
+                        "UsbPortProperties"
+                    ),
+                    "companion": _companion(by_index, p),
+                    "speed": ex.get("Speed"),
+                    "speed_name": ex.get("Speed_name"),
+                    "v2_flags": v2.get("Flags"),
+                }
+            )
+    return matches
+
+
+def companion_pairs(dump: dict[str, Any], hub: dict[str, Any]) -> list[tuple[int, int]]:
+    """同一ハブ内のコンパニオン対応 (USB2 論理ポート, USB3 論理ポート) を返す。"""
+    by_index = {h["index"]: h for h in dump.get("hubs", []) if "index" in h}
+    pairs = set()
+    for p in hub.get("ports", []):
+        c = _companion(by_index, p)
+        if c and c["hub_index"] == hub.get("index"):
+            pairs.add(tuple(sorted((p["port"], c["port"]))))
+    return sorted(pairs)  # type: ignore[arg-type]
+
+
 def _count_ioctls(dump: dict[str, Any]) -> dict[str, dict[str, int]]:
     """IOCTL 名ごとの成功 / 失敗件数を数える（meta 用）。"""
     counts: dict[str, dict[str, int]] = {}
@@ -1181,6 +1390,11 @@ def collect_windows(ctx: Context) -> None:  # pragma: no cover - 実機 (Windows
             " PowerShell を「管理者として実行」で開き、同じコマンドを再実行してください。"
         )
 
+    # 対象デバイスの接続位置（P の判定根拠）
+    ctx.target["matches"] = find_windows_target(dump, ctx.vid, ctx.pid)
+    dump["target"] = ctx.target
+    ctx.check_target()
+
     dump["ioctl_counts"] = ioctl_counts
     path = ctx.write_json(".json", dump)
     ctx.record("Windows 採取結果の保存", True, file=str(path))
@@ -1196,9 +1410,39 @@ def _bit_names(expanded: dict[str, Any] | None) -> str:
     return f"{expanded['hex']} [{', '.join(on) or 'なし'}]{extra}"
 
 
+def summarize_windows_target(target: dict[str, Any]) -> list[str]:
+    lines = [f"■ 対象デバイス {target['device']} の接続位置（P の判定根拠）"]
+    if not target.get("matches"):
+        lines.append("  （見つかりませんでした）")
+    for m in target.get("matches", []):
+        route = " > ".join(f"ハブ[{e['hub_index']}]ポート{e['port']}" for e in m["path_from_root"])
+        lines.append(
+            f"  ハブ番号={m['hub_index']} ({m.get('hub_description')}, {m.get('hub_type')})"
+            f"  ポート番号={m['port']}  {m.get('device_description') or ''}"
+        )
+        lines.append(f"  経路: {route}")
+        protocols = _bit_names(m.get("port_supported_usb_protocols"))
+        lines.append(f"  このポートの SupportedUsbProtocols={protocols}")
+        c = m.get("companion")
+        if c:
+            lines.append(
+                f"  コンパニオン: ハブ[{c.get('hub_index')}]ポート{c.get('port')}"
+                f"  SupportedUsbProtocols={_bit_names(c.get('supported_usb_protocols'))}"
+            )
+        else:
+            lines.append("  コンパニオン: なし（CompanionPortNumber=0）")
+        lines.append(
+            f"  EX.Speed={m.get('speed')} ({m.get('speed_name')})"
+            f"  V2.Flags={_bit_names(m.get('v2_flags'))}"
+        )
+    return lines
+
+
 def summarize_windows(dump: dict[str, Any]) -> list[str]:
     """Windows ダンプから、USBView と照合するための要約行を作る。"""
     lines: list[str] = []
+    if "target" in dump:
+        lines.extend(summarize_windows_target(dump["target"]))
     for hub in dump.get("hubs", []):
         info = (hub.get("hub_information_ex") or {}).get("decoded") or {}
         hub_type = info.get("HubType_name", "?")
@@ -1210,6 +1454,12 @@ def summarize_windows(dump: dict[str, Any]) -> list[str]:
         if attempts and not attempts[-1].get("ok"):
             lines.append(f"    （開けませんでした: {attempts[-1].get('win32_error_message')}）")
             continue
+        pairs = companion_pairs(dump, hub)
+        if pairs:
+            lines.append(
+                "  コンパニオン対応（同じ物理コネクタの論理ポート）: "
+                + ", ".join(f"{a}↔{b}" for a, b in pairs)
+            )
         for port in hub.get("ports", []):
             ex_rec = port.get("connection_information_ex") or {}
             ex = ex_rec.get("decoded") or {}
@@ -1246,7 +1496,7 @@ def summarize_windows(dump: dict[str, Any]) -> list[str]:
                     f"      PortProperties={_bit_names(pcp.get('UsbPortProperties'))}  "
                     f"Companion=hub{pcp.get('CompanionIndex')}/port{pcp.get('CompanionPortNumber')}"
                 )
-    if not lines:
+    if not dump.get("hubs"):
         lines.append("（ハブが 1 つも列挙できませんでした）")
     return lines
 
@@ -1281,6 +1531,7 @@ def _write_meta(ctx: Context) -> None:
         "collected_at": _now_iso(),
         "platform": ctx.platform,
         "is_admin": ctx.is_admin,
+        "target": ctx.target,
         "files": [p.name for p in ctx.saved],
         "items": ctx.items,
         "failures": [i["name"] for i in ctx.failures],
@@ -1299,6 +1550,12 @@ def main(argv: list[str] | None = None) -> int:
         help="保存ファイル名の接頭辞（例: macos_ssd_fast, windows_usb2）",
     )
     parser.add_argument(
+        "--device",
+        required=True,
+        help="採取対象デバイスの VID:PID（16 進、例: 0781:5591）。"
+        "接続先のハブ番号・ポート番号を記録するために使う",
+    )
+    parser.add_argument(
         "--out-dir",
         type=Path,
         default=DEFAULT_OUT_DIR,
@@ -1313,6 +1570,7 @@ def main(argv: list[str] | None = None) -> int:
 
     try:
         label = validate_label(args.label)
+        vid, pid = parse_device_spec(args.device)
     except ValueError as e:
         print(f"ERROR: {e}", file=sys.stderr)
         return 4
@@ -1338,8 +1596,8 @@ def main(argv: list[str] | None = None) -> int:
             print(f"  {p}", file=sys.stderr)
         return 4
 
-    ctx = Context(label, out_dir)
-    print(f"採取開始: label={label}  OS={system} {platform.release()}")
+    ctx = Context(label, out_dir, vid, pid)
+    print(f"採取開始: label={label}  対象={vid:04X}:{pid:04X}  OS={system} {platform.release()}")
     try:
         collect(ctx)
     except Exception:
