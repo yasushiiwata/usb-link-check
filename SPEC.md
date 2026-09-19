@@ -308,10 +308,12 @@ Intel xHCI（`USB ルート ハブ (USB 3.0)`、26 ポート）1 台での試運
 - デバイス名・VID/PID は `Get-PnpDevice` / SetupAPI から取得してよい
 - **デバイス名は次の順に採用する。** 先のものが取得できないときだけ次へフォールバックする。
   1. SetupAPI の `SPDRP_FRIENDLYNAME`
-  2. 文字列ディスクリプタの `iManufacturer` + `iProduct`（例: `Acer` + `USB Flash Drive`）
-  3. `DEVPKEY_Device_BusReportedDeviceDesc`
-  4. SetupAPI の `SPDRP_DEVICEDESC`（例: `USB 大容量記憶装置`）
-  5. `VID:PID`
+  2. **子デバイスの `FriendlyName`**（`CM_Get_Child` で辿る）。マスストレージでは製品名が子側に入る
+     - 実測（2026-09-20）: USB デバイス側は空で、子の USBSTOR 側が `Acer USB Flash Drive USB Device`
+  3. 文字列ディスクリプタの `iManufacturer` + `iProduct`（実測: `Acer` + `USB Device`、`Chicony` + `USB Keyboard`）
+  4. `DEVPKEY_Device_BusReportedDeviceDesc`
+  5. SetupAPI の `SPDRP_DEVICEDESC`（例: `USB 大容量記憶装置`）
+  6. `VID:PID`
 - 文字列ディスクリプタは `IOCTL_USB_GET_DESCRIPTOR_FROM_NODE_CONNECTION` で取得する。
   - **`iSerialNumber` の文字列は要求しないこと**（機器の資産情報をダンプに残さないため。CLAUDE.md 必須ルール 3）。
   - 取得した文字列は解釈済みの値だけを記録する（生バイト列の hex に文字列が入るとサニタイズで検出できないため）。
@@ -399,7 +401,43 @@ B1 の提案文は「実験によって切り分ける手順」を提示して�
 チェーン上に外部ハブ H があるとき、上流側の実効能力は `min(P, H)` とする。
 `L = H < min(P, D)` の場合はハブがボトルネックであり、提案は「デバイスを PC に直結してください」とする。
 
-### 5.4 achievable_max（現構成で到達しうる最高速）
+### 5.4 eMarker の推定（確定・2026-09-20 / Type-C 側は要実機検証）
+
+ポートのコネクタ形状は `USB_PORT_PROPERTIES` の `PortConnectorIsTypeC`（bit3 = 0x08）で判別する。これを使って**ケーブルの eMarker 搭載の有無を推定**する。
+
+USB Type-C 仕様では、次のケーブルに eMarker 搭載が義務付けられている。
+
+| ケーブル | eMarker |
+|---|---|
+| Full-Featured Type-C（C-to-C で SuperSpeed 対応） | 必須 |
+| 5A 対応 | 必須 |
+| USB4 / Thunderbolt | 必須 |
+| USB 2.0 のみの C-to-C | 任意 |
+| A-to-C、A-to-A | 搭載しない |
+
+推定ルール:
+
+| ポートのコネクタ形状 | L | eMarker | 確度 |
+|---|---|---|---|
+| Type-A | 問わず | **なし** | `likely` |
+| Type-C | 5 Gbps 以上 | **あると推定** | `likely` |
+| Type-C | 480 Mbps 以下 | **不明** | `unknown` |
+| 不明 | 問わず | **不明** | `unknown` |
+
+表示例:
+
+```
+eMarker     : なし（ポートが Type-A のため）確度: likely
+eMarker     : あると推定（Type-C ポートで 5Gbps 以上でリンクしているため、
+              USB Type-C 仕様上 eMarker 搭載が必須のケーブルに該当）確度: likely
+```
+
+**断定してはならない。** `EXACT` を使わない。Type-C ポートでも、相手側が Micro-B などの変換ケーブルである可能性を排除できない。必ず「推定」であることを明示する。
+
+- **要実機検証（Type-C ポートを持つ機体で確認）。** 開発機（Intel xHCI）のポートはすべて Type-A で `PortConnectorIsTypeC` が未設定のため、Type-C 側の分岐は実機で検証できていない。
+- **eMarker を直接読む手段について。** eMarker の読み取りには USB Power Delivery の物理層が必要で、PC の USB スタックからは取得できない。Windows には UCSI（USB Type-C Connector System Software Interface）が存在するが、ユーザーモードからの公開 API は確認できていない（**Phase 2 の調査項目**）。確実な読み取りは PD コントローラを搭載した別デバイス側の役割とする。
+
+### 5.5 achievable_max（現構成で到達しうる最高速）
 
 - D 判明時: `min(P, D)`（ケーブルを理想としたときの上限）
 - D 不明時: `UNKNOWN`（`P` を上限値として `AT_LEAST` 表示はしない。P より速い D があるとは限らないため、`最大 P`と注記するに留める）
@@ -430,6 +468,7 @@ B1 の提案文は「実験によって切り分ける手順」を提示して�
 - 確度が `UNKNOWN` の値は「不明」と表示し、**数値を推測で埋めない**
 - 色: OPTIMAL=緑 / IMPROVABLE=黄 / UNDETERMINED=灰 / NOT_DETECTED=赤
 - 到達しうる最高速のラベルは「**現構成で到達しうる最高速**」とする（改善提案と矛盾して見えないようにするため）
+- **ポートのコネクタ形状（Type-C / Type-A）と eMarker の推定を表示する**（5.4）
 - ポートは**人間が読める形と OS の内部表記の両方**を表示する。内部表記は USBView / UsbTreeView との照合に使う。
   - 例: `ポート24（USB3コネクタ / コンパニオン: ポート7） [Port_#0024.Hub_#0001]`
 - **日本語の折り返しは単語境界ではなく表示幅で行う**（`rich` の既定の折り返しでは「より 高速な ポート」のように不自然に切れる）。行頭に句読点・閉じ括弧を置かないこと。
@@ -458,6 +497,8 @@ B1 の提案文は「実験によって切り分ける手順」を提示して�
   ],
   "achievable_max_mbps": 10000,
   "achievable_max_confidence": "exact",
+  "connector_type": "type_c",
+  "emarker": { "state": "likely_present", "certainty": "likely", "reason": "…" },
   "verdict": "IMPROVABLE",
   "suggestions": [
     { "target": "cable", "action": "10Gbps対応ケーブルへ交換", "expected_mbps": 10000, "certainty": "confirmed" }
@@ -466,6 +507,7 @@ B1 の提案文は「実験によって切り分ける手順」を提示して�
 ```
 
 - `speed_mbps` が不明のときは `null`、`confidence` は `"unknown"`
+- `connector_type` は `"type_c"` / `"type_a"` / `"unknown"`、`emarker.state` は `"likely_present"` / `"absent"` / `"unknown"`（5.4）。**`emarker` に `exact` を使わない**
 - `--json` 指定時は `rich` による装飾出力を一切行わないこと（標準出力は JSON のみ）
 
 ### 6.3 終了コード
