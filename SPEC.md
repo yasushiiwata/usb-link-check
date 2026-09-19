@@ -188,7 +188,7 @@ Microsoft の USBView が使っているのと同じ経路を用いる。
 1. `SetupDiGetClassDevs`（GUID_DEVINTERFACE_USB_HUB）でハブを列挙
 2. 各ハブを `CreateFile` で開く
 3. `IOCTL_USB_GET_NODE_CONNECTION_INFORMATION_EX`
-   → `USB_NODE_CONNECTION_INFORMATION_EX.Speed`（0=Low, 1=Full, 2=High, 3=Super）で **L** を取得
+   → `USB_NODE_CONNECTION_INFORMATION_EX.Speed`（0=Low, 1=Full, 2=High）。**SuperSpeed は表現されない**（下記「L の判定順序」）。
 4. `IOCTL_USB_GET_NODE_CONNECTION_INFORMATION_EX_V2`
    → `USB_NODE_CONNECTION_INFORMATION_EX_V2.Flags` から **L と D の両方**を取得
    - `DeviceIsOperatingAtSuperSpeedPlusOrHigher` → 現在 10Gbps 以上で動作中
@@ -197,6 +197,57 @@ Microsoft の USBView が使っているのと同じ経路を用いる。
    - ※「対応しているのに SuperSpeed で動いていない」がまさにフォールバック状態であり、この API はそれを直接表現できる。**Windows では D が取得できる**
 5. `IOCTL_USB_GET_HUB_INFORMATION_EX` / `IOCTL_USB_GET_PORT_CONNECTOR_PROPERTIES`
    → ハブ種別（Root / USB2.0 / USB3.0）とポート属性から **P** を取得
+
+#### L（リンク速度）の判定順序（確定・2026-09-20 実機ダンプ）
+
+**`EX.Speed` は SuperSpeed を表現しない。** 5 Gbps で動作中のデバイスでも `EX.Speed = 2 (UsbHighSpeed)` を返す（`windows_fast` の Port24 で実測）。
+
+L は必ず次の順序で判定すること。
+
+1. `V2.Flags` に `DeviceIsOperatingAtSuperSpeedPlusOrHigher` → 10 Gbps 以上
+2. `V2.Flags` に `DeviceIsOperatingAtSuperSpeedOrHigher` → 5 Gbps
+3. それ以外は `EX.Speed` を使う（0 = 1.5 Mbps、1 = 12 Mbps、2 = 480 Mbps）
+
+**`EX.Speed` を単独で信用してはならない。** 守らないと、すべての USB 3.x デバイスを「USB 2.0 に落ちている」と誤判定する。
+
+`V2.Flags` のビット割り当て:
+
+| ビット | 名前 | 状態 |
+|---|---|---|
+| bit0 (0x01) | `DeviceIsOperatingAtSuperSpeedOrHigher` | **実測で確定** |
+| bit1 (0x02) | `DeviceIsSuperSpeedCapableOrHigher` | **実測で確定** |
+| bit2 (0x04) | `DeviceIsOperatingAtSuperSpeedPlusOrHigher` | 要実機検証（10Gbps デバイス未入手） |
+| bit3 (0x08) | `DeviceIsSuperSpeedPlusCapableOrHigher` | 要実機検証（10Gbps デバイス未入手） |
+
+実測値（2026-09-20、対象 346D:5678 の USB メモリ）:
+
+| ダンプ | 構成 | 論理ポート | `EX.Speed` | `V2.Flags` | `bcdUSB` |
+|---|---|---|---|---|---|
+| `windows_fast` | USB3 コネクタ直挿し、5 Gbps | 24 (`Usb300`) | 2 | `0x03` | `0x0320` |
+| `windows_usb2` | USB2.0 延長ケーブル経由、480 Mbps | 7 (`Usb110\|Usb200`) | 2 | `0x02` | `0x0210` |
+| `windows_port11_ss_fail` | 直挿しなのに 480 Mbps | 11 (`Usb110\|Usb200`) | 2 | `0x02` | `0x0210` |
+
+- **`bcdUSB` はリンク速度によって変わる**（同じデバイスが 5 Gbps では `0x0320`、480 Mbps では `0x0210` を返した）。D の根拠に使ってはならない。
+
+#### D（デバイス能力）の判定ルール（確定・2026-09-20）
+
+| `V2.Flags` | D | 確度 |
+|---|---|---|
+| `DeviceIsSuperSpeedPlusCapableOrHigher` あり | 10 Gbps | `AT_LEAST` |
+| `DeviceIsSuperSpeedCapableOrHigher` のみ | 5 Gbps | `EXACT` |
+| どちらも無し、かつ L = 480 Mbps | 480 Mbps | `EXACT` |
+| どちらも無し、かつ L < 480 Mbps | L | `AT_LEAST`（上限は 480 Mbps） |
+
+- 最後の行を `EXACT` にしない理由: SuperSpeed 非対応であることは分かるが、High-Speed デバイスが不良ケーブルで Full-Speed に落ちている可能性を排除できないため（3.1、CLAUDE.md ルール 2）。
+
+#### コンパニオンポートの挙動（確定・2026-09-20 実機ダンプ）
+
+同一デバイスが、リンク速度によって別の論理ポートに現れる。
+
+- 5 Gbps でリンクしたとき: ポート 24（`Usb300`）に現れ、コンパニオンはポート 7
+- 480 Mbps でリンクしたとき: ポート 7（`Usb110|Usb200`）に現れ、コンパニオンはポート 24
+
+P は両方の `SupportedUsbProtocols` の和集合で求める（下記「P の算出定義」）。
 
 #### P（ポート能力）の算出定義（確定・2026-09-20）
 
@@ -226,6 +277,17 @@ P = そのポートの SupportedUsbProtocols
 - ここで P をポート 5 の値だけで求めると、P = 480 Mbps、L = 480 Mbps となり、判定表 A2（ポート律速）と**誤判定する**。
 - 実際のコネクタは USB3 対応なので、P は 5 Gbps 以上である。正しい判定は **A1（ケーブル律速）**。
 - 実測（2026-09-20、Intel xHCI ルートハブ）: 同一コネクタのペアは 5↔25、6↔21、7↔24、11↔23、12↔22。
+
+#### 既知の限界: P の過大評価（2026-09-20 実機ダンプ `windows_port11_ss_fail`）
+
+**「コンパニオンが存在する」ことは「物理的に SuperSpeed 配線が来ている」ことを保証しない。** そのため P は過大評価されうる。
+
+- USB メモリを Port11 に**直挿し**したにもかかわらず、480 Mbps でリンクした。
+- Port11 はコンパニオン Port23（`Usb300`）を持つので、和集合ルールでは P = 5 Gbps 以上と算出される。
+- しかし実際には、この物理コネクタの SuperSpeed 配線が機能していない（フロントパネルの USB3 ヘッダ未接続など）。
+- その結果、ケーブルを使っていないのに A1（ケーブル律速）と判定される。
+
+ツールからは「直挿しかどうか」を判別できない。そのため、この状況では両方の可能性を提示し、**断定しない**（5.1 A1 の提案文）。
 
 #### 所見: P の取得手段（2026-09-20 実機試運転。確定ではなく見込み）
 
@@ -270,10 +332,12 @@ Intel xHCI（`USB ルート ハブ (USB 3.0)`、26 ポート）1 台での試運
 
 | # | 条件 | ボトルネック | C について言えること | 提案 | 確度 |
 |---|---|---|---|---|---|
-| A1 | `L < min(P, D)` | **ケーブル（確定）** | `C = L`（EXACT） | ケーブルを交換すれば `min(P,D)` まで出る | `confirmed` |
+| A1 | `L < min(P, D)` | **ケーブル（確定）** | `C = L`（EXACT） | 「ケーブルを USB 3.x 対応品に交換してください。ケーブルを使わず直挿ししている場合は、そのポートの SuperSpeed 配線に問題がある可能性があります（フロントパネル配線の未接続など）。別のポートで試してください。」 | `confirmed` |
 | A2 | `L = P < D` | **ポート** | `C ≥ L`（AT_LEAST） | より高速なポート/PC に変更すれば L より速くなる。ただし**上限はケーブル次第で不明**（最大 D） | `likely` |
 | A3 | `L = D ≤ P` | デバイス | `C ≥ L` | 改善余地なし。デバイスが天井 | — |
 | A4 | `L = P = D` | なし | `C ≥ L` | **現構成の最高速を達成済み** | — |
+
+**A1 の文言に注意。** 直挿しでも P の過大評価（4.2「既知の限界」）により A1 になりうる。「ケーブルが原因です」と断定せず、ケーブル交換とポート変更の両方を提示すること。
 
 **A2 の文言に注意。** 「ポートを変えれば 10Gbps 出ます」と断定してはならない。ケーブル能力は `L 以上`としか分かっていない。断定するとユーザーが機材を買い替えた後に「ケーブルのせいで速くならない」という最悪の結果になる。
 
@@ -405,9 +469,10 @@ usb-link-check [OPTIONS]
 |---|---|---|
 | `macos_ssd_fast` | 高速ケーブル | ケーブルを律速と判定しない（§10） |
 | `macos_ssd_usb2` | USB 2.0 ケーブル | B1 |
-| `windows_fast` | USB3 ポート + 高速ケーブル | 正常系 |
-| `windows_usb2` | USB3 ポート + USB 2.0 ケーブル | ケーブル律速（A1） |
-| `windows_port2` | USB2 専用ポート（コンパニオンを持たないポート）+ 高速ケーブル | ポート律速（A2） |
+| `windows_fast` | USB3 コネクタ直挿し、5 Gbps（採取済み） | A4（OPTIMAL） |
+| `windows_usb2` | USB3 コネクタ + USB2.0 延長ケーブル、480 Mbps（採取済み） | ケーブル律速（A1） |
+| `windows_port11_ss_fail` | USB3 コネクタ（Port11）直挿しなのに 480 Mbps（採取済み） | A1。ただし提案文にポート側 SS 配線の可能性を含むこと（4.2「既知の限界」） |
+| `windows_port2` | USB2 専用ポート（コンパニオンを持たないポート）+ 高速ケーブル | ポート律速（A2）。**TODO: 実機ダンプ待ち**（該当する物理コネクタが未発見） |
 
 `windows_port2` に使うポートの注意: デバイスが USB2 論理ポート（1〜16 側）に現れても、そのポートが USB2 専用だとは限らない。4.2「所見」のとおり、USB3 コネクタに USB2 ケーブルで挿した場合（`windows_usb2`）も 1〜16 側に現れるため、A1 と A2 の区別はコンパニオンの有無で行う。
 
@@ -429,8 +494,10 @@ label ごとに生成されるファイル:
 - **パーサー層（`platforms/*.py` の解析関数）: 用意した実機フィクスチャ全件に対するテストを必須とし、分岐網羅 100% を目標とする**
 - **判定ロジック（`diagnosis.py`）: §5 の判定表 A1〜A4 / B1〜B3 の各行に対応するテストを 1 件以上持つこと**（表とテストが 1:1 対応していること）
 - **P の算出定義（4.2）: 実機フィクスチャを使ったテストを必ず持つこと。**
+  - `windows_fast`（USB3 コネクタ直挿し、5 Gbps）→ A4 と判定されること。**L が 480 Mbps と誤判定されないこと**（4.2「L の判定順序」の検証）
   - `windows_usb2`（USB3 コネクタ + USB2 ケーブル）→ A1 と判定されること
-  - `windows_port2`（USB2 専用コネクタ）→ A2 と判定されること
+  - `windows_port11_ss_fail`（直挿しで SS 配線不良）→ A1 と判定され、提案文にポート側の可能性が含まれること
+  - `windows_port2`（USB2 専用コネクタ）→ A2 と判定されること（TODO: 実機ダンプ待ち）
   - テスト関数名に行番号（A1 / A2）を含めること
   - 合成データではなく、必ず実機フィクスチャで検証すること。コンパニオンを誤って扱っても合成データのテストは通ってしまうため
 - **subprocess / ctypes の実行層は `# pragma: no cover` で除外する。** 全体カバレッジ率を目標値にしない（グルーコードの水増しテストを誘発するため）
@@ -455,7 +522,9 @@ label ごとに生成されるファイル:
 - [ ] `--json` 出力が §6.2 のスキーマに適合する（スキーマ検証テストがある）
 - [ ] D が `UNKNOWN` のフィクスチャで、出力に「不明」が表示され、**推測値が入らない**
 - [ ] 判定表 §5 の A1〜A4 / B1〜B3 すべてに対応するユニットテストが存在する
-- [ ] フィクスチャ `windows_usb2.json` を入力すると A1（ケーブル律速）、`windows_port2.json` を入力すると A2（ポート律速）と判定される（P の算出定義 4.2 の検証）
+- [ ] フィクスチャ `windows_usb2.json` を入力すると A1（ケーブル律速）、`windows_port2.json` を入力すると A2（ポート律速）と判定される（P の算出定義 4.2 の検証。`windows_port2` は実機ダンプ待ち）
+- [ ] フィクスチャ `windows_fast.json` を入力すると L = 5 Gbps、A4（OPTIMAL）と判定される（`EX.Speed` を単独で信用しないことの検証）
+- [ ] フィクスチャ `windows_port11_ss_fail.json` を入力すると A1 と判定され、提案文にケーブル交換とポートの SS 配線の両方の可能性が含まれる
 - [ ] `tests/fixtures/raw/` 内にシリアル番号が残っていないことを検査するテストがある
 - [ ] Linux 上で実行すると終了コード 4 とメッセージが出る
 - [ ] README.md（日英）に、**「ケーブル能力は測定ではなく推論である」**という前提が明記されている
