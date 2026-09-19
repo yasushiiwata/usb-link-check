@@ -131,12 +131,12 @@ def _diagnose_known_device(
             verdict="IMPROVABLE",
             cable=Capability.exact(link),
             bottleneck_kind="cable",
-            achievable=_capability_min(upstream, device),
+            achievable=capability_min(upstream, device),
             suggestions=[
                 Suggestion(
                     target="cable",
                     action=A1_ACTION,
-                    expected=_capability_min(upstream, device),
+                    expected=capability_min(upstream, device),
                     certainty="confirmed",
                 )
             ],
@@ -150,7 +150,7 @@ def _diagnose_known_device(
             rule="A4", verdict="OPTIMAL",
             cable=Capability.at_least(link),
             bottleneck_kind=None,
-            achievable=_capability_min(upstream, device),
+            achievable=capability_min(upstream, device),
             suggestions=[],
         )  # fmt: skip
     if link == d:
@@ -160,7 +160,7 @@ def _diagnose_known_device(
             rule="A3", verdict="OPTIMAL",
             cable=Capability.at_least(link),
             bottleneck_kind="device",
-            achievable=_capability_min(upstream, device),
+            achievable=capability_min(upstream, device),
             suggestions=[],
         )  # fmt: skip
 
@@ -189,7 +189,7 @@ def _diagnose_known_device(
         cable=Capability.at_least(link),
         bottleneck_kind="hub" if is_hub_bottleneck else "port",
         bottleneck_name=upstream_name,
-        achievable=_capability_min(upstream, device),
+        achievable=capability_min(upstream, device),
         suggestions=[
             Suggestion(
                 target="hub" if is_hub_bottleneck else "port",
@@ -277,7 +277,7 @@ def _undetermined(
     return diagnosis
 
 
-def _capability_min(a: Capability, b: Capability) -> Capability:
+def capability_min(a: Capability, b: Capability) -> Capability:
     """min(a, b)。片方が不明なら不明。
 
     EXACT な側が最小値と一致するなら結果も EXACT。

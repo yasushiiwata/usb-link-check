@@ -5,7 +5,7 @@
 
 import pytest
 
-from usb_link_check.diagnosis import diagnose
+from usb_link_check.diagnosis import capability_min, diagnose
 from usb_link_check.models import Capability, ChainElement, Confidence, LinkSpeed
 
 HIGH = LinkSpeed.HIGH_SPEED
@@ -161,6 +161,32 @@ def test_unknown_link_speed_is_undetermined() -> None:
     d = diagnose(None, Capability.exact(SS), Capability.exact(SS))
     assert d.verdict == "UNDETERMINED"
     assert d.link_speed is None
+
+
+@pytest.mark.parametrize(
+    ("a", "b", "expected"),
+    [
+        # EXACT な v と AT_LEAST な w で w >= v なら、min は v で確定する
+        (Capability.exact(SS), Capability.at_least(SS), Capability.exact(SS)),
+        (Capability.exact(SS), Capability.at_least(SSP), Capability.exact(SS)),
+        (Capability.exact(HIGH), Capability.at_least(SSP), Capability.exact(HIGH)),
+        # w < v のときは真の値が w 以上 v 以下のどこかなので AT_LEAST に落とす
+        (Capability.exact(SSP), Capability.at_least(SS), Capability.at_least(SS)),
+        (Capability.exact(SS), Capability.at_least(HIGH), Capability.at_least(HIGH)),
+        # 両方 EXACT / 両方 AT_LEAST
+        (Capability.exact(SS), Capability.exact(SSP), Capability.exact(SS)),
+        (Capability.at_least(SS), Capability.at_least(SSP), Capability.at_least(SS)),
+        # どちらかが UNKNOWN なら UNKNOWN（推測で埋めない）
+        (Capability.unknown(), Capability.exact(SS), Capability.unknown()),
+        (Capability.at_least(SS), Capability.unknown(), Capability.unknown()),
+    ],
+)
+def test_capability_min_follows_the_confidence_rule(
+    a: Capability, b: Capability, expected: Capability
+) -> None:
+    """SPEC.md 5.1「能力値の min の確度」の一般則。"""
+    assert capability_min(a, b) == expected
+    assert capability_min(b, a) == expected  # 引数の順序に依らない
 
 
 @pytest.mark.parametrize(
