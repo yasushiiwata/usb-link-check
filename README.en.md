@@ -45,6 +45,7 @@ pip install -e .
 
 ```sh
 usb-link-check --list                    # list the USB devices that were found
+usb-link-check --list --all              # also list every port, including empty ones
 usb-link-check                           # diagnose the USB mass-storage device
 usb-link-check --device 0781:5591        # select by VID:PID
 usb-link-check --device "Extreme SSD"    # select by substring of the device name
@@ -74,6 +75,22 @@ Two findings from real hardware matter most here; missing either of them produce
 2. **Port numbers do not map one-to-one onto physical connectors.** A USB3 connector appears as two logical ports, one USB2 and one USB3. P is therefore the union of the protocols supported by the port and by its companion port. Ignore this and a cable bottleneck (A1) is mistaken for a port bottleneck (A2).
 
 See [SPEC.md](SPEC.md) (Japanese) for the full specification.
+
+### The device list
+
+`--list` shows L (the effective link speed), P (port capability) and D (device capability) for each device, and marks every row where `L < min(P, D)` with `⚠`, so a device running below its capability is visible at a glance. A trailing `+` means "at least, upper bound unknown". `--all` additionally lists every port, so you can see which physical socket is USB3.
+
+### eMarker estimation
+
+`PortConnectorIsTypeC` tells whether a port is Type-C or Type-A, which lets the tool **estimate** whether the cable carries an eMarker (the USB Type-C specification mandates one in, for example, SuperSpeed-capable C-to-C cables).
+
+| Port | Link speed | eMarker | Certainty |
+|---|---|---|---|
+| Type-A | any | absent | likely |
+| Type-C | 5 Gbps or faster | likely present | likely |
+| Type-C | 480 Mbps or slower | unknown | unknown |
+
+This is never stated as fact: a Type-C port may still be paired with an adapter cable. Reading an eMarker directly requires the USB Power Delivery physical layer, which the PC's USB stack does not expose (Windows UCSI is a Phase 2 investigation item).
 
 ### Known limitation
 

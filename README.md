@@ -45,11 +45,31 @@ pip install -e .
 
 ```sh
 usb-link-check --list                    # 検出した USB デバイスを一覧表示
+usb-link-check --list --all              # 空きポートも含めて全ポートの正体を表示
 usb-link-check                           # USB マスストレージのデバイスを診断
 usb-link-check --device 0781:5591        # VID:PID を指定して診断
 usb-link-check --device "Extreme SSD"    # デバイス名の部分一致で指定
 usb-link-check --json                    # JSON で出力
 usb-link-check --debug                   # 取得した生データを標準エラーへ出力
+```
+
+### 一覧表示
+
+`--list` は各デバイスの L（実効リンク速度）、P（ポート能力）、D（デバイス能力）を並べ、`L < min(P, D)` の行に `⚠` を付けます。一覧を見るだけで、能力より遅くつながっている機器が分かります。
+
+```
+    VID:PID    L(実効)     P(ポート)   D(デバイス)  位置                デバイス名
+    32E6:9221  480 Mbps    5 Gbps+     480 Mbps    ハブ0/ポート6       Web Camera
+⚠   346D:5678  480 Mbps    5 Gbps+     5 Gbps      ハブ0/ポート7       Acer USB Flash Drive
+    04F2:0400  1.5 Mbps    5 Gbps+     1.5 Mbps+   ハブ0/ポート12      Chicony USB Keyboard
+```
+
+`+` は「以上（上限不明）」です。`--all` を付けると、どの穴が USB3 コネクタなのかも分かります。
+
+```
+位置              種別          コネクタ  P(ポート)   コンパニオン    状態
+ハブ0/ポート7     USB3コネクタ  Type-A    5 Gbps+     ポート24        DeviceConnected
+ハブ0/ポート8     USB2専用      Type-A    480 Mbps    なし            NoDeviceConnected
 ```
 
 `--device` を指定せず候補が 1 つに定まらない場合、**勝手に選ばず**一覧を表示して終了します。誤診断を避けるためです。
@@ -60,22 +80,27 @@ USB3 コネクタに USB 2.0 ケーブルでつないだ場合です。
 
 ```
 現在の接続
-  ポート      : Port_#0007.Hub_#0001 (USB3 コネクタ) 5 Gbps 以上（上限不明）
-  ケーブル    : (識別不能)                       推定 480 Mbps  ← ボトルネック
-  デバイス    : USB Device                       5 Gbps
+  ポート      : ポート7（USB3コネクタ / Type-A / コンパニオン: ポート24）
+                5 Gbps 以上（上限不明）
+                [Port_#0007.Hub_#0001]
+  ケーブル    : (識別不能)  推定 480 Mbps  ← ボトルネック
+  eMarker     : なし（ポートが Type-A のため）確度: likely
+  デバイス    : Acer USB Flash Drive USB Device  5 Gbps
   ──────────────────────────────────────────────────────────
   リンク速度  : USB 2.0 High-Speed (480 Mbps)
 
 判定  [FAIL] 改善の余地があります
       （判定表 A1）
-      到達しうる最高速: 5 Gbps
+      現構成で到達しうる最高速: 5 Gbps
 
 改善提案
-  1. ケーブルを USB 3.x 対応品に交換してください。ケーブルを使わず直挿ししている場合は、
-     そのポートの SuperSpeed 配線に問題がある可能性があります（フロントパネル配線の未接続など）。
-     別のポートで試してください。
+  1. ケーブルを USB 3.x 対応品に交換してください。ケーブルを使わず直挿し
+     している場合は、そのポートの SuperSpeed 配線に問題がある可能性があり
+     ます（フロントパネル配線の未接続など）。別のポートで試してください。
      期待できる速度: 5 Gbps（確度: confirmed）
 ```
+
+角括弧内は OS の内部表記です。USBView / UsbTreeView の表示と照合するために残しています。
 
 ### 終了コード
 
@@ -97,6 +122,18 @@ Windows では、Microsoft の USBView と同じ経路（`SetupDiGetClassDevs` +
 2. **ポート番号と物理コネクタは 1 対 1 ではありません。** USB3 コネクタは USB2 と USB3 の 2 つの論理ポートとして現れます。P は両者（コンパニオンポート）の対応プロトコルの和集合で求めます。これを忘れると、ケーブル律速（A1）をポート律速（A2）と取り違えます。
 
 詳細は [SPEC.md](SPEC.md) を参照してください。
+
+### eMarker の推定
+
+ポートが Type-C か Type-A かは `PortConnectorIsTypeC` から分かります。これを使って、ケーブルの eMarker 搭載の有無を**推定**します（USB Type-C 仕様では、SuperSpeed 対応の C-to-C ケーブルなどに eMarker 搭載が義務付けられています）。
+
+| ポート | リンク速度 | eMarker | 確度 |
+|---|---|---|---|
+| Type-A | 問わず | なし | likely |
+| Type-C | 5 Gbps 以上 | あると推定 | likely |
+| Type-C | 480 Mbps 以下 | 不明 | unknown |
+
+Type-C ポートでも相手側が変換ケーブルである可能性は排除できないため、**断定はしません**。eMarker を直接読むには USB Power Delivery の物理層が必要で、PC の USB スタックからは取得できません（Windows の UCSI については Phase 2 の調査項目です）。
 
 ### 既知の限界
 
