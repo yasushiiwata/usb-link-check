@@ -308,8 +308,9 @@ Intel xHCI（`USB ルート ハブ (USB 3.0)`、26 ポート）1 台での試運
 - デバイス名・VID/PID は `Get-PnpDevice` / SetupAPI から取得してよい
 - **デバイス名は次の順に採用する。** 先のものが取得できないときだけ次へフォールバックする。
   1. SetupAPI の `SPDRP_FRIENDLYNAME`
-  2. **子デバイスの `FriendlyName`**（`CM_Get_Child` で辿る）。マスストレージでは製品名が子側に入る
+  2. マスストレージのときのみ **子デバイスの `FriendlyName`**（`CM_Get_Child` で辿る）。製品名が子側に入る
      - 実測（2026-09-20）: USB デバイス側は空で、子の USBSTOR 側が `Acer USB Flash Drive USB Device`
+     - マスストレージ以外で子を優先すると機能名になってしまう（実測: Bluetooth アダプタが `Bluetooth Device (Personal Area Network)`）。そのためマスストレージ以外では 3 の後に回す
   3. 文字列ディスクリプタの `iManufacturer` + `iProduct`（実測: `Acer` + `USB Device`、`Chicony` + `USB Keyboard`）
   4. `DEVPKEY_Device_BusReportedDeviceDesc`
   5. SetupAPI の `SPDRP_DEVICEDESC`（例: `USB 大容量記憶装置`）
