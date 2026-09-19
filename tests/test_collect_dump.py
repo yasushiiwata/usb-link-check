@@ -1,24 +1,40 @@
-"""tools/collect_dump.py の OS 非依存部分のテスト。
+"""tools/collect_dump.py（採取スクリプト）のテスト。
 
-構造体のデコード結果そのものは実機ダンプとの照合でしか検証できない（要実機検証）ため、
-ここでは入力検証・ビット展開・対象デバイスの接続位置の特定（自前の出力スキーマ上の処理）
-のみを確認する。
+Windows の採取処理・解析処理はパッケージ側にあるため（test_windows_parser.py で検証）、
+ここでは採取スクリプト固有の部分（引数の検証・一覧表示の整形）だけを確認する。
 """
+
+import json
+from pathlib import Path
+from typing import Any
 
 import pytest
 
 from collect_dump import (
-    USB_PROTOCOL_BITS,
-    V2_FLAG_BITS,
-    companion_pairs,
-    describe_windows_devices,
-    expand_bits,
-    find_windows_target,
     format_windows_device_list,
     main,
     parse_device_spec,
+    summarize_windows,
     validate_label,
 )
+from usb_link_check.platforms.windows import companion_pairs, describe_devices
+
+RAW = Path(__file__).parent / "fixtures" / "raw"
+
+
+def load(name: str) -> dict[str, Any]:
+    return json.loads((RAW / f"{name}.json").read_text(encoding="utf-8"))
+
+
+@pytest.mark.parametrize("label", ["macos_ssd_fast", "windows_usb2", "a.b-c_1"])
+def test_validate_label_accepts_safe_names(label: str) -> None:
+    assert validate_label(label) == label
+
+
+@pytest.mark.parametrize("label", ["", "../x", "a/b", "a b", ".hidden", "-x"])
+def test_validate_label_rejects_unsafe_names(label: str) -> None:
+    with pytest.raises(ValueError):
+        validate_label(label)
 
 
 @pytest.mark.parametrize(
@@ -39,135 +55,43 @@ def test_parse_device_spec_rejects_invalid(spec: str) -> None:
         parse_device_spec(spec)
 
 
-# 以下はこのスクリプト自身が出力する辞書スキーマ（OS の出力形式ではない）を最小限に組み立てたもの。
-ROOT_PATH = "\\\\?\\usb#root_hub30#4&0&0#{f18a0e88-c30c-11d0-8815-00a0c906bed8}"
-EXT_PATH = "\\\\?\\usb#vid_05e3&pid_0626#5&0&0#{f18a0e88-c30c-11d0-8815-00a0c906bed8}"
-
-
-def _port(
-    port: int,
-    *,
-    vid: int = 0,
-    pid: int = 0,
-    protocols: int = 0,
-    companion: int = 0,
-    companion_hub: str = "",
-    downstream: int | None = None,
-) -> dict:
-    rec: dict = {
-        "port": port,
-        "connection_information_ex": {
-            "decoded": {
-                "ConnectionStatus": 1 if vid else 0,
-                "Speed": 2,
-                "Speed_name": "UsbHighSpeed",
-                "DeviceDescriptor": {"idVendor": vid, "idProduct": pid},
-            }
-        },
-        "connection_information_ex_v2": {
-            "decoded": {
-                "SupportedUsbProtocols": expand_bits(protocols, USB_PROTOCOL_BITS),
-                "Flags": expand_bits(0, V2_FLAG_BITS),
-            }
-        },
-        "port_connector_properties": {
-            "decoded": {
-                "CompanionPortNumber": companion,
-                "CompanionHubSymbolicLinkName": companion_hub,
-            }
-        },
-    }
-    if downstream is not None:
-        rec["downstream_hub_index"] = downstream
-    return rec
-
-
-def _dump() -> dict:
-    root_link = ROOT_PATH.replace("\\\\?\\", "").upper()
-    return {
-        "hubs": [
-            {
-                "index": 0,
-                "device_path": ROOT_PATH,
-                "ports": [
-                    _port(3, protocols=0b011, downstream=1, vid=0x05E3, pid=0x0626),
-                    _port(
-                        5,
-                        vid=0x0781,
-                        pid=0x5591,
-                        protocols=0b011,
-                        companion=25,
-                        companion_hub=root_link,
-                    ),
-                    _port(25, protocols=0b100, companion=5, companion_hub=root_link),
-                ],
-            },
-            {
-                "index": 1,
-                "device_path": EXT_PATH,
-                "ports": [_port(2, vid=0x1234, pid=0x0001, protocols=0b011)],
-            },
-        ]
-    }
-
-
-def test_find_windows_target_records_hub_port_and_companion() -> None:
-    (m,) = find_windows_target(_dump(), 0x0781, 0x5591)
-    assert (m["hub_index"], m["port"]) == (0, 5)
-    assert m["path_from_root"] == [{"hub_index": 0, "port": 5}]
-    assert m["port_supported_usb_protocols"]["value"] == 0b011
-    assert m["companion"]["hub_index"] == 0
-    assert m["companion"]["port"] == 25
-    assert m["companion"]["supported_usb_protocols"]["value"] == 0b100
-
-
-def test_find_windows_target_follows_downstream_hub() -> None:
-    (m,) = find_windows_target(_dump(), 0x1234, 0x0001)
-    assert m["path_from_root"] == [{"hub_index": 0, "port": 3}, {"hub_index": 1, "port": 2}]
-    assert m["companion"] is None
-
-
-def test_find_windows_target_not_found() -> None:
-    assert find_windows_target(_dump(), 0xFFFF, 0xFFFF) == []
-
-
-def test_format_windows_device_list_shows_hub_port_and_companion() -> None:
-    lines = format_windows_device_list(describe_windows_devices(_dump()))
-    ssd = next(line for line in lines if line.startswith("0781:5591"))
-    assert "ハブ0/ポート5" in ssd
-    assert "あり(ハブ0/ポート25)" in ssd
-    other = next(line for line in lines if line.startswith("1234:0001"))
-    assert "ハブ1/ポート2" in other
-    assert "なし" in other
-    hub = next(line for line in lines if line.startswith("05E3:0626"))
-    assert "[ハブ]" not in hub  # DeviceIsHub は未設定
-
-
 def test_list_and_device_are_mutually_exclusive() -> None:
     with pytest.raises(SystemExit):
         main(["--list", "--device", "0781:5591"])
 
 
-def test_companion_pairs() -> None:
-    dump = _dump()
-    assert companion_pairs(dump, dump["hubs"][0]) == [(5, 25)]
+def test_device_list_shows_hub_port_and_companion() -> None:
+    lines = format_windows_device_list(describe_devices(load("windows_usb2")))
+    ssd = next(line for line in lines if line.startswith("346D:5678"))
+    assert "ハブ0/ポート7" in ssd
+    assert "あり(ハブ0/ポート24)" in ssd
+    # windows_port2 では同じデバイスがコンパニオンなしのポートに現れる
+    port2 = next(
+        line
+        for line in format_windows_device_list(describe_devices(load("windows_port2")))
+        if line.startswith("346D:5678")
+    )
+    assert "ハブ0/ポート8" in port2
+    assert "なし" in port2
 
 
-@pytest.mark.parametrize("label", ["macos_ssd_fast", "windows_usb2", "a.b-c_1"])
-def test_validate_label_accepts_safe_names(label: str) -> None:
-    assert validate_label(label) == label
+def test_device_list_shows_effective_speed_not_ex_speed_name() -> None:
+    """EX.Speed の名前（5Gbps でも UsbHighSpeed）を速度として見せない（SPEC.md 4.2）。"""
+    lines = format_windows_device_list(describe_devices(load("windows_fast")))
+    ssd = next(line for line in lines if line.startswith("346D:5678"))
+    assert "5 Gbps" in ssd
+    assert "UsbHighSpeed" not in ssd
 
 
-@pytest.mark.parametrize("label", ["", "../x", "a/b", "a b", ".hidden", "-x"])
-def test_validate_label_rejects_unsafe_names(label: str) -> None:
-    with pytest.raises(ValueError):
-        validate_label(label)
+def test_summary_shows_effective_link_speed_not_only_ex_speed() -> None:
+    """EX.Speed だけを見せると誤解を招くため、実効リンク速度を併記する（要望による）。"""
+    lines = summarize_windows(load("windows_fast"), companion_pairs=companion_pairs)
+    target_block = "\n".join(lines[:8])
+    assert "実効リンク速度" in target_block
+    assert "5 Gbps" in target_block
+    assert "EX.Speed=2" in target_block  # 生値も併記する
 
 
-def test_expand_bits_keeps_raw_value_and_unknown_bits() -> None:
-    out = expand_bits(0b1_0000_0101, V2_FLAG_BITS)
-    assert out["value"] == 0b1_0000_0101
-    assert out["hex"] == "0x00000105"
-    assert list(out["bits"].values()) == [True, False, True, False]
-    # 定義外のビット (bit 8) も捨てずに残す
-    assert out["unknown_bits_hex"] == "0x00000100"
+def test_summary_lists_companion_pairs() -> None:
+    lines = summarize_windows(load("windows_fast"), companion_pairs=companion_pairs)
+    assert any("5↔25" in line and "7↔24" in line for line in lines)
