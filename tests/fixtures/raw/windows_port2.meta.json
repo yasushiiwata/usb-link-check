@@ -2,7 +2,7 @@
   "collector": "usb-link-check tools/collect_dump.py",
   "collector_version": "0.1.0",
   "label": "windows_port2",
-  "collected_at": "2026-09-20T07:06:30+09:00",
+  "collected_at": "2026-09-20T08:24:28+09:00",
   "platform": {
     "system": "Windows",
     "release": "11",
@@ -32,6 +32,17 @@
           }
         ],
         "device_description": "USB Device",
+        "friendly_name": null,
+        "child_names": [
+          "Acer USB Flash Drive USB Device"
+        ],
+        "bus_reported_description": "USB Device",
+        "description": "USB 大容量記憶装置",
+        "manufacturer": "Acer",
+        "product": "USB Device",
+        "device_class": 0,
+        "service": "USBSTOR",
+        "location_information": "Port_#0008.Hub_#0001",
         "port_supported_usb_protocols": {
           "value": 3,
           "hex": "0x00000003",
