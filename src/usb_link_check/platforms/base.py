@@ -11,7 +11,6 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from typing import Any, Literal
 
-from ..diagnosis import capability_min
 from ..models import Capability, Confidence, ConnectorType, Diagnosis, LinkSpeed
 
 _DEVICE_SPEC_RE = re.compile(r"^(?P<vid>[0-9A-Fa-f]{1,4}):(?P<pid>[0-9A-Fa-f]{1,4})$")
@@ -35,25 +34,27 @@ class DeviceSummary:
 
     @property
     def status(self) -> Literal["underperforming", "undetermined", "ok"]:
-        """`--list` の 3 値の状態（SPEC.md 6.1.1）。
+        """`--list` の 3 値の状態（SPEC.md 6.1.1）。判定基準は D（デバイス能力）。
 
-        - underperforming: `L < min(P, D)` が確定している
-        - undetermined: P または D の上限が不明で、落ちているのか天井なのか判別できない
-        - ok: P と D がともに EXACT で `L = min(P, D)`
+        - underperforming: `L < D` が確定している（改善の余地がある）
+        - undetermined: D の上限が不明で、`L < D` かどうか判別できない
+        - ok: `L = D` が確定している（デバイスが天井。これ以上速くならない）
+
+        `min(P, D)` を基準にしないのは、ポートが律速しているデバイス（判定表 A2）も
+        挿す穴を変えれば速くなるため、改善の余地があるものとして拾う必要があるから。
         """
-        ceiling = capability_min(self.port_capability, self.device_capability)
-        lower = ceiling.lower_bound
-        if lower is None or self.link_speed is None:
+        d = self.device_capability.lower_bound
+        if d is None or self.link_speed is None:
             return "undetermined"
-        if self.link_speed < lower:
-            # 天井の下限値より遅い = 確実に落ちている
+        if self.link_speed < d:
+            # D の下限値より遅い = デバイスはもっと速く動ける
             return "underperforming"
-        # L が天井の下限値と同じとき、天井が AT_LEAST なら本当の上限が分からない
-        return "ok" if ceiling.confidence is Confidence.EXACT else "undetermined"
+        # L が D の下限値と同じとき、D が AT_LEAST なら天井なのか落ちているのか分からない
+        return "ok" if self.device_capability.confidence is Confidence.EXACT else "undetermined"
 
     @property
     def is_underperforming(self) -> bool:
-        """L < min(P, D) が確定しているか。"""
+        """L < D が確定しているか。"""
         return self.status == "underperforming"
 
     @property

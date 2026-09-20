@@ -229,14 +229,48 @@ def test_device_list_shows_l_p_d_for_each_device() -> None:
 
 
 def test_device_list_status_is_three_valued() -> None:
-    """⚠ / ? / 無印 の 3 値（SPEC.md 6.1.1）。2 値では判別不能が「問題なし」に見える。"""
+    """⚠ / ? / 無印 の 3 値（SPEC.md 6.1.1）。判定基準は D（デバイス能力）。"""
     by_vid_pid = {d.vid_pid: d for d in platform_for("windows_usb2").devices()}
-    # L=480 < min(P≥5G, D=5G) が確定
+    # L=480 < D=5G（EXACT）が確定
     assert by_vid_pid["346D:5678"].status == "underperforming"
     # D が「1.5 Mbps 以上」なので、天井なのか落ちているのか判別できない
     assert by_vid_pid["04F2:0400"].status == "undetermined"
-    # P も D も確定値で、L がその最小値と一致
+    # D=480（EXACT）で L=480。デバイスが天井
     assert by_vid_pid["A69C:8D81"].status == "ok"
+
+
+@pytest.mark.parametrize(
+    ("fixture", "expected_status", "expected_verdict"),
+    [
+        ("windows_fast", "ok", "OPTIMAL"),  # L = D = 5Gbps
+        ("windows_usb2", "underperforming", "IMPROVABLE"),  # ケーブル律速
+        ("windows_port2", "underperforming", "IMPROVABLE"),  # ポート律速
+        ("windows_port11_ss_fail", "underperforming", "IMPROVABLE"),
+    ],
+)
+def test_list_mark_matches_the_device_verdict(
+    fixture: str, expected_status: str, expected_verdict: str
+) -> None:
+    """--list の印と --device の判定が構造的に食い違わないこと（SPEC.md 6.1.1）。
+
+    ポート律速（A2）を無印にすると一覧で見落としが生じるため、判定基準は D とする。
+    """
+    platform = platform_for(fixture)
+    (storage,) = [d for d in platform.devices() if (d.vid, d.pid) == TARGET]
+    assert storage.status == expected_status
+    assert platform.diagnose(storage).verdict == expected_verdict
+
+
+@pytest.mark.parametrize("fixture", ["windows_fast", "windows_usb2", "windows_port2"])
+def test_unmarked_rows_are_always_optimal(fixture: str) -> None:
+    """無印 ⟹ OPTIMAL、⚠ ⟹ OPTIMAL ではない（SPEC.md 6.1.1）。全デバイスで成り立つこと。"""
+    platform = platform_for(fixture)
+    for device in platform.devices():
+        verdict = platform.diagnose(device).verdict
+        if device.status == "ok":
+            assert verdict == "OPTIMAL", f"{device.vid_pid} は無印なのに {verdict}"
+        if device.status == "underperforming":
+            assert verdict != "OPTIMAL", f"{device.vid_pid} は ⚠ なのに {verdict}"
 
 
 def test_device_list_includes_the_legend_for_all_three_marks() -> None:
@@ -248,23 +282,25 @@ def test_device_list_includes_the_legend_for_all_three_marks() -> None:
     assert keyboard.startswith("?")
 
 
-def test_port_limited_device_is_unmarked_but_legend_explains_it() -> None:
-    """A2（ポート律速）は L = min(P, D) なので無印。凡例で「問題なし」と読めないようにする。"""
+def test_port_limited_device_is_marked_as_improvable() -> None:
+    """A2（ポート律速）も挿す穴を変えれば速くなるので ⚠ を付ける（SPEC.md 6.1.1）。"""
     platform = platform_for("windows_port2")
     (storage,) = [d for d in platform.devices() if (d.vid, d.pid) == TARGET]
-    assert storage.status == "ok"
-    assert platform.diagnose(storage).rule == "A2"  # 改善の余地はある
-    text = render_device_list(platform.devices())
-    assert "現構成で出せる最高速" in text
-    assert "ポートを変えれば速くなる構成もこれに該当します" in text
+    assert storage.status == "underperforming"
+    assert platform.diagnose(storage).rule == "A2"
+    line = next(
+        line for line in render_device_list(platform.devices()).splitlines() if "346D:5678" in line
+    )
+    assert line.startswith("⚠")
 
 
-def test_device_list_marks_optimal_device_without_a_symbol() -> None:
+def test_device_list_marks_device_at_its_ceiling_without_a_symbol() -> None:
     fast = platform_for("windows_fast").devices()
     storage = next(d for d in fast if d.is_mass_storage)
-    assert storage.status == "ok"  # 5Gbps でリンクし、D=5Gbps が天井
+    assert storage.status == "ok"  # L = D = 5Gbps
     line = next(line for line in render_device_list(fast).splitlines() if "346D:5678" in line)
     assert not line.startswith(("⚠", "?"))
+    assert "無印 = デバイス自身の上限で動作しています" in render_device_list(fast)
 
 
 def test_port_list_shows_empty_ports_and_their_kind() -> None:
