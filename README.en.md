@@ -78,11 +78,11 @@ See [SPEC.md](SPEC.md) (Japanese) for the full specification.
 
 ### The device list
 
-`--list` shows L (the effective link speed), P (port capability) and D (device capability) for each device, and marks each row with one of three states, so that a row the tool cannot judge is never read as "fine":
+`--list` shows L (the effective link speed), P (port capability) and D (device capability) for each device, and marks each row with one of three states, so that a row the tool cannot judge is never read as "fine". The criterion is D, the device's own capability, so a `⚠` row is exactly a row that `--device` also reports as improvable:
 
-- `⚠` — confirmed to be linking below its capability (`L < min(P, D)`)
-- `?` — undeterminable: P or D has an unknown upper bound, so the tool cannot tell whether the device is at its ceiling or has fallen back
-- (unmarked) — confirmed to run at the fastest speed this configuration allows (`L = min(P, D)`)
+- `⚠` — the device can run faster than it currently does (`L < D`, confirmed), so something is worth changing
+- `?` — undeterminable: D has an unknown upper bound, so the tool cannot tell whether the device is at its ceiling or has fallen back
+- (unmarked) — running at the device's own ceiling (`L = D`, confirmed); it will not get faster
 
 A trailing `+` means "at least, upper bound unknown". `--all` additionally lists every port, so you can see which physical socket is USB3.
 
